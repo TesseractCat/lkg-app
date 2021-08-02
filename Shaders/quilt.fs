@@ -53,9 +53,9 @@ void main (void) {
     float subp2 = subp * pitch;
     
     float a = (-st.x - st.y * tilt) * pitch - holoPlayCalibration.w;
-    color.r = texture(texture0, quilt_map(vec3(tile.xy, tile.x * tile.y), st, a-holoPlayRB.x*subp2)).r;
-    color.g = texture(texture0, quilt_map(vec3(tile.xy, tile.x * tile.y), st, a-subp2)).g;
-    color.b = texture(texture0, quilt_map(vec3(tile.xy, tile.x * tile.y), st, a-holoPlayRB.y*subp2)).b;
+    color.r = texture(texture1, quilt_map(vec3(tile.xy, tile.x * tile.y), st, a-holoPlayRB.x*subp2)).r;
+    color.g = texture(texture1, quilt_map(vec3(tile.xy, tile.x * tile.y), st, a-subp2)).g;
+    color.b = texture(texture1, quilt_map(vec3(tile.xy, tile.x * tile.y), st, a-holoPlayRB.y*subp2)).b;
     
     #if defined(HOLOPLAY_DEBUG_CENTER)
     // Mark center line only in central view
@@ -64,7 +64,7 @@ void main (void) {
     color.b = color.b * 0.001 + st.y;
     #elif defined(HOLOPLAY_DEBUG)
     // use quilt texture
-    color = texture(texture0, st).rgb;
+    color = texture(texture1, st).rgb;
     #endif
     
     finalColor = vec4(color,1.0);

@@ -1,5 +1,6 @@
 extern "C" {
     #include "raylib.h"
+    #include "raymath.h"
     #include "rlgl.h"
 }
 #include <cmath>
@@ -17,10 +18,14 @@ extern "C" {
     #define GLSL_VERSION            100
 #endif
 
+#define LKG_DISTANCE 20.0f
+#define LKG_ANGLE 25
+
 struct LKGConfig {
     float pitch;
     float slope;
     float center;
+    float viewCone;
     float dpi;
     int invView;
 };
@@ -37,6 +42,9 @@ LKGConfig LoadConfig(std::istream& config_file) {
     float center = 0.9997089252844671;
     config_file.ignore(256, '=');
     config_file >> out.center;
+    float viewCone = 40.0f;
+    config_file.ignore(256, '=');
+    config_file >> out.viewCone;
     int invView = 1;
     config_file.ignore(256, '=');
     config_file >> out.invView;
@@ -45,19 +53,6 @@ LKGConfig LoadConfig(std::istream& config_file) {
     config_file >> out.dpi;
     
     return out;
-}
-
-void DrawCubeAndWires(Vector3 pos, float x, float y, float z, Color c) {
-    DrawCube(pos, x, y, z, c);
-    DrawCubeWires(pos, x, y, z, BLACK);
-}
-
-void DrawScene() {
-    DrawCubeAndWires({0, 0, 0}, 1.0f, 1.0f, 1.0f, RED);
-    DrawCubeAndWires({(float)sin(GetTime()), 1.5f, -2.5f}, 1.0f, 1.0f, 1.0f, BLUE);
-    DrawCubeAndWires({0, -1.5f, 0.0f + (float)sin(GetTime())}, 1.0f, 1.0f, 1.0f, GREEN);
-    DrawCubeAndWires({0, 1.5f + (float)sin(GetTime()), 0.5f}, 2.0f, 0.5f, 0.1f, DARKGRAY);
-    
 }
 
 Matrix frustumMatrixOffAxis(double left, double right, double bottom, double top, double znear, double zfar,
@@ -82,7 +77,7 @@ Matrix frustumMatrixOffAxis(double left, double right, double bottom, double top
     matFrustum.m8 = ((float)right + (float)left)/rl;
     
     //See: https://docs.lookingglassfactory.com/keyconcepts/camera
-    float cameraSize = dist * tan((fov/2.0f) * (0.0174533f));
+    float cameraSize = dist * tan((fov/2.0f) * DEG2RAD);
     matFrustum.m8 += offset/(cameraSize * aspect);
     
     matFrustum.m9 = ((float)top + (float)bottom)/tb;
@@ -105,8 +100,6 @@ void BeginMode3DLG(Camera3D camera, float aspect, float offset)
     rlPushMatrix();                 // Save previous matrix, which contains the settings for the 2d ortho projection
     rlLoadIdentity();               // Reset current matrix (projection)
 
-    //float aspect = (float)CORE.Window.currentFbo.width/(float)CORE.Window.currentFbo.height;
-
     // NOTE: zNear and zFar values are important when computing depth buffer values
     if (camera.projection == CAMERA_PERSPECTIVE)
     {
@@ -114,15 +107,7 @@ void BeginMode3DLG(Camera3D camera, float aspect, float offset)
         double top = RL_CULL_DISTANCE_NEAR*tan(camera.fovy*0.5*DEG2RAD);
         double right = top*aspect;
 
-        rlSetMatrixProjection(frustumMatrixOffAxis(-right, right, -top, top, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR, offset, aspect, camera.fovy, 20.0f));
-    }
-    else if (camera.projection == CAMERA_ORTHOGRAPHIC)
-    {
-        // Setup orthographic projection
-        double top = camera.fovy/2.0;
-        double right = top*aspect;
-
-        rlOrtho(-right, right, -top,top, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
+        rlSetMatrixProjection(frustumMatrixOffAxis(-right, right, -top, top, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR, offset, aspect, camera.fovy, camera.position.z));
     }
 
     rlMatrixMode(RL_MODELVIEW);     // Switch back to modelview matrix
@@ -133,6 +118,32 @@ void BeginMode3DLG(Camera3D camera, float aspect, float offset)
     rlMultMatrixf(MatrixToFloat(matView));      // Multiply modelview matrix by view matrix (camera)
 
     rlEnableDepthTest();            // Enable DEPTH_TEST for 3D
+}
+
+Shader gradientShader;
+Shader shadowShader;
+
+void DrawCubeAndWires(Vector3 pos, float x, float y, float z, Color c, Shader s) {
+    BeginShaderMode(s);
+        DrawCube(pos, x, y, z, c);
+    EndShaderMode();
+    DrawCubeWires(pos, x, y, z, BLACK);
+}
+void DrawScene() {
+    const float BACKDROP_DIST = -4.5f;
+    
+    float time = GetTime();// * 0.25f;
+    Vector3 position = {(float)sin(time), (float)sin(time * 2.0f) * 1.5f, 0.0f};
+    DrawCubeAndWires(position, 1.5f, 1.5f, 1.5f, WHITE, gradientShader);
+    BeginShaderMode(shadowShader);
+        DrawCube(position, 1.5f, 1.5f, 1.5f, WHITE);
+    EndShaderMode();
+    
+    rlPushMatrix();
+    rlTranslatef(0, 0, BACKDROP_DIST);
+    rlRotatef(90 - LKG_ANGLE, 1, 0, 0);
+        DrawPlane({0, 0, 0}, {50.0f, 50.0f}, Color{220, 220, 220, 255});
+    rlPopMatrix();
 }
 
 int main()
@@ -146,15 +157,24 @@ int main()
     bool fullscreen = false;
     
     // Window
-    SetConfigFlags(FLAG_WINDOW_HIGHDPI | FLAG_WINDOW_RESIZABLE);
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(screenWidth, screenHeight, "LKG Quilt Viewer");
     
     // Fix Rectangle UVs (See: https://github.com/raysan5/raylib/issues/1730)
     SetShapesTexture(rlGetTextureDefault(), { 0.0f, 0.0f, 1.0f, 1.0f });
     
-    // LKG Config
-    Shader lkgFragment = LoadShader(0, "./quilt.fs");
+    //Load shaders
+    Shader lkgFragment = LoadShader(0, "./Shaders/quilt.fs");
+    gradientShader = LoadShader("./Shaders/gradient.vs", "./Shaders/gradient.fs");
+    SetShaderValue(gradientShader, GetShaderLocation(gradientShader, "startColor"), &(Vector4{ 0.6f, 0, 0, 1.0f }), SHADER_UNIFORM_VEC4);
+    SetShaderValue(gradientShader, GetShaderLocation(gradientShader, "endColor"), &(Vector4{ 0.8f, 0, 0, 1.0f }), SHADER_UNIFORM_VEC4);
     
+    shadowShader = LoadShader("./Shaders/projection_shadow.vs", "./Shaders/projection_shadow.fs");
+    SetShaderValue(shadowShader, GetShaderLocation(shadowShader, "lightPos"), &(Vector3{ 0.0f, -3.0f, 20.0f }), SHADER_UNIFORM_VEC3);
+    float planeZ = -4.0f;
+    SetShaderValue(shadowShader, GetShaderLocation(shadowShader, "planeZ"), &planeZ, SHADER_UNIFORM_FLOAT);
+    
+    // LKG Config
     std::ifstream config_file("display.cfg");
     LKGConfig config = LoadConfig(config_file);
     
@@ -164,6 +184,7 @@ int main()
     float tile[2] = {(float)8,(float)6};
     
     // Initialize shader uniforms
+    int quiltTexLoc = GetShaderLocation(lkgFragment, "texture1");
     int pitchLoc = GetShaderLocation(lkgFragment, "pitch");
     SetShaderValue(lkgFragment, pitchLoc, &config.pitch, SHADER_UNIFORM_FLOAT);
     int slopeLoc = GetShaderLocation(lkgFragment, "slope");
@@ -181,20 +202,28 @@ int main()
     
     // Render textures 8x6 (420x560)
     std::vector<RenderTexture2D> renderTextures;
-    RenderTexture2D quiltRT = LoadRenderTexture(1536, 2048);
+    //RenderTexture2D quiltRT = LoadRenderTexture(672, 672);
+    //const int TILE_WIDTH = 84;
+    //const int TILE_HEIGHT = 112;
+    RenderTexture2D quiltRT = LoadRenderTexture(1344, 1344);
+    const int TILE_WIDTH = 168;
+    const int TILE_HEIGHT = 224;
+    //RenderTexture2D quiltRT = LoadRenderTexture(3360, 3360);
+    //const int TILE_WIDTH = 420;
+    //const int TILE_HEIGHT = 560;
     for (int i = 0; i < 48; i++) {
-        renderTextures.push_back(LoadRenderTexture(192, 341));
+        renderTextures.push_back(LoadRenderTexture(TILE_WIDTH, TILE_HEIGHT));
     }
     
     // Camera
     Camera3D camera = { 0 };
-    camera.position = { 0, 0.0f, 20.0f };
+    camera.position = { 0, 0, LKG_DISTANCE };
     camera.target = { 0, 0, 0 };
     camera.up = { 0, 1.0f, 0 };
-    camera.fovy = 17.0f;//17.0f;
+    camera.fovy = 17.0f;
     camera.projection = CAMERA_PERSPECTIVE;
 
-    SetTargetFPS(60);               // Set our viewer to run at 60 frames-per-second
+    SetTargetFPS(45);               // Set our viewer to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main loop
@@ -228,15 +257,19 @@ int main()
             for (int i = 0; i < (int)renderTextures.size(); i++) {
                 BeginTextureMode(renderTextures[i]);
                 
-                    //ClearBackground({(unsigned char) (i*5), (unsigned char)i, 0, 255});
                     ClearBackground(RAYWHITE);
                     
-                    float movementAmount = 10.0f;
-                    float offset = -movementAmount + ((movementAmount * 2)/48.0) * i;
+                    float movementAmount = tan((config.viewCone/2.0f) * DEG2RAD) * LKG_DISTANCE;
+                    float offset = -movementAmount + ((movementAmount * 2)/(tile[0] * tile[1])) * i;
                     camera.position.x = offset;
                     camera.target.x = offset;
-                    BeginMode3DLG(camera, 192.0f/341.0f, -offset);
-                        DrawScene();
+                    
+                    BeginMode3DLG(camera, (float)TILE_WIDTH/(float)TILE_HEIGHT, -offset);
+                        //Rotate stand angle
+                        rlPushMatrix();
+                        rlRotatef(LKG_ANGLE, 1, 0, 0);
+                            DrawScene();
+                        rlPopMatrix();
                     EndMode3D();
                 
                 EndTextureMode();
@@ -245,15 +278,17 @@ int main()
             BeginTextureMode(quiltRT);
                 for (int i = (int)renderTextures.size() - 1; i >= 0; i--) {
                     DrawTextureRec(renderTextures[i].texture,
-                            {0, 0, (float)192, (float)341},
-                            {(float) (i%8)*192, (float) (floor(i/8))*341}, WHITE);
+                            {0, 0, (float)TILE_WIDTH, (float)TILE_HEIGHT},
+                            {(float) (i%(int)tile[0])*TILE_WIDTH, (float) (floor(i/(int)tile[0]))*TILE_HEIGHT}, WHITE);
                 }
             EndTextureMode();
             
             BeginShaderMode(lkgFragment);
-                DrawTextureRec(quiltRT.texture,
-                        {0, 0, (float)1536, (float)-2048},
-                        {0, 0}, WHITE);
+                //DrawTextureRec(quiltRT.texture,
+                //        {0, 0, (float)1536, (float)-2048},
+                //        {0, 0}, WHITE);
+                SetShaderValueTexture(lkgFragment, quiltTexLoc, quiltRT.texture);
+                DrawRectangle(0,0,GetScreenWidth(),GetScreenHeight(), WHITE);
             EndShaderMode();
                 
             DrawFPS(50, 50);
@@ -268,7 +303,10 @@ int main()
         UnloadRenderTexture(rt);
     }
     UnloadRenderTexture(quiltRT);
+    
     UnloadShader(lkgFragment);
+    UnloadShader(gradientShader);
+    
     ClearDroppedFiles();
     CloseWindow();
     //--------------------------------------------------------------------------------------
