@@ -33,8 +33,10 @@ vec2 quilt_map(vec3 t, vec2 pos, float a) {
     tile2.x += dir.x * floor(a);
     
     //Vertically flip quilt uvs, I don't know why this is necessary
-    return ((tile2 + pos) / t.xy) * vec2(1,-1) + vec2(0, 1);
+    return ((tile2 + pos) / t.xy);// * vec2(1,-1) + vec2(0, 1);
 }
+
+//#define HOLOPLAY_DEBUG
 
 void main (void) {
     vec4 holoPlayCalibration = vec4(dpi, pitch, slope, center);

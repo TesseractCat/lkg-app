@@ -26,5 +26,5 @@ void main()
     float z = planeZ;
     
     // Calculate final vertex position
-    gl_Position = mvp*vec4(x, y, z, 1.0);
+    gl_Position = (mvp)*vec4(x, y, z, 1.0);
 }
