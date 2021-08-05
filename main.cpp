@@ -55,6 +55,17 @@ LKGConfig LoadConfig(std::istream& config_file) {
     return out;
 }
 
+void DrawFPSSize(int posX, int posY, int fontSize)
+{
+    Color color = LIME; // good fps
+    int fps = GetFPS();
+
+    if (fps < 30 && fps >= 15) color = ORANGE;  // warning FPS
+    else if (fps < 15) color = RED;    // bad FPS
+
+    DrawText(TextFormat("%2i FPS", GetFPS()), posX, posY, fontSize, color);
+}
+
 Matrix frustumMatrixOffAxis(double left, double right, double bottom, double top, double znear, double zfar,
         double offset, double aspect, double fov, double dist)
 {
@@ -122,6 +133,7 @@ void BeginMode3DLG(Camera3D camera, float aspect, float offset)
 
 Shader gradientShader;
 Shader shadowShader;
+Model testModel;
 
 void DrawCubeAndWires(Vector3 pos, float x, float y, float z, Color c, Shader s) {
     BeginShaderMode(s);
@@ -139,11 +151,18 @@ void DrawScene() {
         DrawCube(position, 1.5f, 1.5f, 1.5f, WHITE);
     EndShaderMode();
     
-    rlPushMatrix();
+    //rlPushMatrix();
+    //rlTranslatef(1.0f, -1.0f, 0);
+    //rlRotatef(90, 1, 0, 0);
+    //    DrawModel(testModel,Vector3{0,0,0}, 0.2f, WHITE);
+    //    //DrawModelWires(testModel,Vector3{0,0,0}, 0.2f, BLACK);
+    //rlPopMatrix();
+    
+    /*rlPushMatrix();
     rlTranslatef(0, 0, BACKDROP_DIST);
     rlRotatef(90 - LKG_ANGLE, 1, 0, 0);
         DrawPlane({0, 0, 0}, {50.0f, 50.0f}, Color{220, 220, 220, 255});
-    rlPopMatrix();
+    rlPopMatrix();*/
 }
 
 int main()
@@ -201,7 +220,6 @@ int main()
     SetShaderValue(lkgFragment, tileLoc, tile, SHADER_UNIFORM_VEC2);
     
     // Render textures 8x6 (420x560)
-    std::vector<RenderTexture2D> renderTextures;
     //RenderTexture2D quiltRT = LoadRenderTexture(672, 672);
     //const int TILE_WIDTH = 84;
     //const int TILE_HEIGHT = 112;
@@ -211,9 +229,8 @@ int main()
     //RenderTexture2D quiltRT = LoadRenderTexture(3360, 3360);
     //const int TILE_WIDTH = 420;
     //const int TILE_HEIGHT = 560;
-    for (int i = 0; i < 48; i++) {
-        renderTextures.push_back(LoadRenderTexture(TILE_WIDTH, TILE_HEIGHT));
-    }
+    
+    int tileCount = tile[0] * tile[1];
     
     // Camera
     Camera3D camera = { 0 };
@@ -222,8 +239,11 @@ int main()
     camera.up = { 0, 1.0f, 0 };
     camera.fovy = 17.0f;
     camera.projection = CAMERA_PERSPECTIVE;
+    
+    // Models
+    testModel = LoadModel("Models/gameboy.gltf");
 
-    SetTargetFPS(45);               // Set our viewer to run at 60 frames-per-second
+    SetTargetFPS(60);               // Set our viewer to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main loop
@@ -253,14 +273,13 @@ int main()
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-
-            for (int i = 0; i < (int)renderTextures.size(); i++) {
-                BeginTextureMode(renderTextures[i]);
-                
-                    ClearBackground(RAYWHITE);
+            BeginTextureMode(quiltRT);
+                ClearBackground(RAYWHITE);
+                for (int i = tileCount - 1; i >= 0; i--) {
+                    rlViewport((i%(int)tile[0])*TILE_WIDTH, (floor(i/(int)tile[0]))*TILE_HEIGHT, TILE_WIDTH, TILE_HEIGHT);
                     
                     float movementAmount = tan((config.viewCone/2.0f) * DEG2RAD) * LKG_DISTANCE;
-                    float offset = -movementAmount + ((movementAmount * 2)/(tile[0] * tile[1])) * i;
+                    float offset = -movementAmount + ((movementAmount * 2)/tileCount) * i;
                     camera.position.x = offset;
                     camera.target.x = offset;
                     
@@ -272,14 +291,6 @@ int main()
                         rlPopMatrix();
                     EndMode3D();
                 
-                EndTextureMode();
-            }
-            
-            BeginTextureMode(quiltRT);
-                for (int i = (int)renderTextures.size() - 1; i >= 0; i--) {
-                    DrawTextureRec(renderTextures[i].texture,
-                            {0, 0, (float)TILE_WIDTH, (float)TILE_HEIGHT},
-                            {(float) (i%(int)tile[0])*TILE_WIDTH, (float) (floor(i/(int)tile[0]))*TILE_HEIGHT}, WHITE);
                 }
             EndTextureMode();
             
@@ -290,8 +301,8 @@ int main()
                 SetShaderValueTexture(lkgFragment, quiltTexLoc, quiltRT.texture);
                 DrawRectangle(0,0,GetScreenWidth(),GetScreenHeight(), WHITE);
             EndShaderMode();
-                
-            DrawFPS(50, 50);
+            
+            DrawFPSSize(50, 50, 75);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -299,9 +310,6 @@ int main()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    for (auto rt : renderTextures) {
-        UnloadRenderTexture(rt);
-    }
     UnloadRenderTexture(quiltRT);
     
     UnloadShader(lkgFragment);
