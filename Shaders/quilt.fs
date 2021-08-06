@@ -1,8 +1,9 @@
-#version 330
-//See: https://github.com/patriciogonzalezvivo/glslViewer/blob/main/src/shaders/holoplay.h
+#version 310 es
+precision mediump float;
 
+//See: https://github.com/patriciogonzalezvivo/glslViewer/blob/main/src/shaders/holoplay.h
 // QUILT TEXTURE
-uniform sampler2D texture0;
+//uniform sampler2D texture0;
 uniform sampler2D texture1;
 
 //uniform vec2        resolution;
@@ -35,8 +36,6 @@ vec2 quilt_map(vec3 t, vec2 pos, float a) {
     //Vertically flip quilt uvs, I don't know why this is necessary
     return ((tile2 + pos) / t.xy);// * vec2(1,-1) + vec2(0, 1);
 }
-
-//#define HOLOPLAY_DEBUG
 
 void main (void) {
     vec4 holoPlayCalibration = vec4(dpi, pitch, slope, center);
