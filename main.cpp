@@ -27,7 +27,7 @@ void DrawScene() {
     const float BACKDROP_DIST = -4.5f;
     
     float game_time = GetTime();// * 0.25f;
-    Vector3 position = {(float)sin(game_time), (float)sin(game_time * 2.0f) * 1.5f, 0.5f};
+    Vector3 position = {(float)sin(game_time), (float)sin(game_time * 2.0f) * 1.5f, -1.0f};
     Vector3 position2 = {(float)sin(game_time * 3.0f), (float)sin(game_time * 1.5f) * 1.5f, -0.5f};
 
     //litMaterial.maps[MATERIAL_MAP_DIFFUSE].color = RED;
@@ -66,9 +66,15 @@ void DrawScene() {
 	colors[instanceIdx] = c;
         transforms[instanceIdx++] = m;
     };
+
+    //Cube
+    rlPushMatrix();
+        rlScalef(0.5f, 0.5f, 0.5f);
+        rlTranslatef(position.x * 2, position.y * 2, position.z);
+	drawCube(rlGetMatrixTransform(), PINK);
+    rlPopMatrix();
     
     //Seconds
-    litMaterial.maps[MATERIAL_MAP_DIFFUSE].color = RED;
     rlPushMatrix();
 	rlRotatef(fmod(calender_time.tm_sec, 60.0f)/60.0f * -360.0f, 0, 0, 1);
         rlScalef(0.05f, 1.1f, 0.05f);
@@ -92,14 +98,6 @@ void DrawScene() {
 	drawCube(rlGetMatrixTransform(), DARKGRAY);
     rlPopMatrix();
 
-    /*for (int i = 0; i < 250; i++) {
-        rlPushMatrix();
-            rlScalef(0.1f, 0.1f, 0.1f);
-            rlRotatef((i/50.0f) * 360.0f, 0, 0, 1);
-            rlTranslatef(18.0f + sin(GetTime() * 3.0f + i) * 3.0f, 0, (i/50) * -3.0f + 7.5f);
-	    drawCube(rlGetMatrixTransform(), BLUE);
-        rlPopMatrix();
-    }*/
     for (int i = 0; i < 12; i++) {
         rlPushMatrix();
             rlScalef(0.1f, 0.1f, 0.1f);
@@ -183,18 +181,18 @@ int main()
     SetShaderValue(lkgFragment, tileLoc, tile, SHADER_UNIFORM_VEC2);
     
     // Render textures 8x6 (420x560)
-    //RenderTexture2D quiltRT = LoadRenderTexture(3072, 2048);
-    //const int TILE_WIDTH = 384;
-    //const int TILE_HEIGHT = 512;
+    //RenderTexture2D quiltRT = LoadRenderTexture(504, 504);
+    //const int TILE_WIDTH = 63;
+    //const int TILE_HEIGHT = 84;
     //RenderTexture2D quiltRT = LoadRenderTexture(1008, 1008);
     //const int TILE_WIDTH = 126;
     //const int TILE_HEIGHT = 168;
-    RenderTexture2D quiltRT = LoadRenderTexture(1344, 1344);
-    const int TILE_WIDTH = 168;
-    const int TILE_HEIGHT = 224;
-    //RenderTexture2D quiltRT = LoadRenderTexture(3360, 3360);
-    //const int TILE_WIDTH = 420;
-    //const int TILE_HEIGHT = 560;
+    //RenderTexture2D quiltRT = LoadRenderTexture(1344, 1344);
+    //const int TILE_WIDTH = 168;
+    //const int TILE_HEIGHT = 224;
+    RenderTexture2D quiltRT = LoadRenderTexture(3360, 3360);
+    const int TILE_WIDTH = 420;
+    const int TILE_HEIGHT = 560;
 
     int tileCount = tile[0] * tile[1];
     
