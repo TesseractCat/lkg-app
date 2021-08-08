@@ -1,5 +1,5 @@
 cd build/
-cmake ..
+cmake -DCMAKE_BUILD_TYPE=Debug ..
 make
 mv lkg_app ../lkg_app
 cd ..
