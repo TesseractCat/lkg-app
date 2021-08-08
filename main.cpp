@@ -16,6 +16,7 @@
 
 #include "scene.h"
 #include "clock.h"
+#include "pong.h"
 
 #define LKG_DISTANCE 20.0f
 #define LKG_ANGLE 25
@@ -93,7 +94,8 @@ int main()
     camera.projection = CAMERA_PERSPECTIVE;
 
     // Scene
-    ClockScene scene;
+    //Scene* scene = new ClockScene();
+    Scene* scene = new PongScene();
     
     //SetTargetFPS(30);               // Set our viewer to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -102,12 +104,12 @@ int main()
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
         // Update
-	scene.Update();
+	scene->Update();
         
         // Draw
         //----------------------------------------------------------------------------------
         BeginTextureMode(quiltRT);
-            ClearBackground(Color{225,225,225,255});
+            ClearBackground(scene->GetClearColor());
             for (int i = tileCount - 1; i >= 0; i--) {
                 rlViewport((i%(int)tile[0])*TILE_WIDTH, (floor(i/(int)tile[0]))*TILE_HEIGHT, TILE_WIDTH, TILE_HEIGHT);
                 
@@ -120,7 +122,7 @@ int main()
             	//Rotate stand angle
             	rlPushMatrix();
             	rlRotatef(LKG_ANGLE, 1, 0, 0);
-		    scene.Draw();
+		    scene->Draw();
             	rlPopMatrix();
                 EndMode3D();
             }

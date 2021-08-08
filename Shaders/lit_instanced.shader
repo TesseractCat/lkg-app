@@ -13,10 +13,10 @@ in mat4 matModel;
 
 // Input uniform values
 uniform mat4 mvp;
-
 uniform mat4 matView;
 uniform mat4 matProjection;
 
+uniform vec3 shadowColor;
 uniform vec3 lightPos;
 uniform float planeZ;
 
@@ -41,7 +41,7 @@ void main()
         return;
     }
     
-    fragColor = vec4(vec3(0.8), 1.0);
+    fragColor = vec4(shadowColor, 1.0);
 
     //See: https://math.stackexchange.com/questions/35857/two-point-line-form-in-3d 
     vec3 A = ((vec4(vertexPosition, 1.0))).xyz;

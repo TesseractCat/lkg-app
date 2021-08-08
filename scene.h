@@ -3,7 +3,8 @@
 
 class Scene {
 public:
-    virtual void Init() { };
+    virtual Color GetClearColor() { Color{225,225,225,255}; }
+
     virtual void Update() { };
     virtual void Draw() { };
 };

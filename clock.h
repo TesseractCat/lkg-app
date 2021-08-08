@@ -12,8 +12,6 @@
 #include "scene.h"
 #include "raylib_extensions.h"
 
-#define BACKDROP_DIST -4.5f
-
 class ClockScene : public Scene
 {
 private:
@@ -31,6 +29,8 @@ public:
         litShader.locs[SHADER_LOC_MATRIX_VIEW] = GetShaderLocation(litShader, "matView");
         litShader.locs[SHADER_LOC_MATRIX_PROJECTION] = GetShaderLocation(litShader, "matProjection");
 
+        Vector3 shadowColor = Vector3{0.8f, 0.8f, 0.8f};
+        SetShaderValue(litShader, GetShaderLocation(litShader, "shadowColor"), &shadowColor, SHADER_UNIFORM_VEC3);
         Vector3 lightPos = Vector3{0.0f, -3.0f, 22.0f};
         SetShaderValue(litShader, GetShaderLocation(litShader, "lightPos"), &lightPos, SHADER_UNIFORM_VEC3);
         float planeZ = -2.0f;
@@ -38,7 +38,6 @@ public:
 
         litMaterial = LoadMaterialDefault(); // Lit material
         litMaterial.shader = litShader;
-        litMaterial.maps[MATERIAL_MAP_DIFFUSE].color = RED;
 
         cubeMesh = GenMeshCube(1.5f, 1.5f, 1.5f);
         //cubeMesh = GenMeshPlaneY(1.5f, 1.5f, 1, 1);
