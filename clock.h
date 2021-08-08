@@ -47,11 +47,9 @@ public:
     }
     void Update() { }
     void Draw() {
-	BeginShaderMode(litShader);
-
-        float game_time = GetTime();// * 0.25f;
-        Vector3 position = {(float)sin(game_time), (float)sin(game_time * 2.0f) * 1.5f, -1.0f};
-        Vector3 position2 = {(float)sin(game_time * 3.0f), (float)sin(game_time * 1.5f) * 1.5f, -0.5f};
+        float gameTime = GetTime();// * 0.25f;
+        Vector3 position = {(float)sin(gameTime), (float)sin(gameTime * 2.0f) * 1.5f, -2.0f};
+        Vector3 position2 = {(float)sin(gameTime * 3.0f), (float)sin(gameTime * 1.5f) * 1.5f, -0.5f};
 
         std::time_t now = time(nullptr);
         std::tm calender_time = *std::localtime( std::addressof(now) ) ;
@@ -113,7 +111,5 @@ public:
             rlPopMatrix();
         }
         DrawMeshInstancedC(cubeMesh, litMaterial, transforms, colors, instanceIdx);
-
-	EndShaderMode();
     }
 };
