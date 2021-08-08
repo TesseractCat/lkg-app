@@ -6,6 +6,10 @@
 #include <GLES3/gl3.h>
 #include <GLES3/gl3ext.h>
 
+float GetRandomFloat(float min, float max) {
+    return min + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(max-min)));
+}
+
 void DrawFPSSize(int posX, int posY, int fontSize)
 {
     Color color = LIME; // good fps
@@ -176,7 +180,7 @@ void DrawMeshInstancedC(Mesh mesh, Material material, Matrix *transforms, Color 
     //-----------------------------------------------------
 
     // Bind active texture maps (if available)
-    /*for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
+    for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
     {
         if (material.maps[i].texture.id > 0)
         {
@@ -189,9 +193,9 @@ void DrawMeshInstancedC(Mesh mesh, Material material, Matrix *transforms, Color 
                 (i == MATERIAL_MAP_CUBEMAP)) rlEnableTextureCubemap(material.maps[i].texture.id);
             else rlEnableTexture(material.maps[i].texture.id);
 
-            rlSetUniform(material.shader.locs[SHADER_LOC_MAP_DIFFUSE + i], &i, SHADER_UNIFORM_INT, 1);
+            rlSetUniform(material.shader.locs[SHADER_LOC_MAP_ALBEDO + i], &i, SHADER_UNIFORM_INT, 1);
         }
-    }*/
+    }
 
     // Try binding vertex array objects (VAO)
     // or use VBOs if not possible
@@ -265,7 +269,7 @@ void DrawMeshInstancedC(Mesh mesh, Material material, Matrix *transforms, Color 
     else rlDrawVertexArrayInstanced(0, mesh.vertexCount, instances);
 
     // Unbind all binded texture maps
-    /*for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
+    for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
     {
         // Select current shader texture slot
         rlActiveTextureSlot(i);
@@ -275,7 +279,7 @@ void DrawMeshInstancedC(Mesh mesh, Material material, Matrix *transforms, Color 
             (i == MATERIAL_MAP_PREFILTER) ||
             (i == MATERIAL_MAP_CUBEMAP)) rlDisableTextureCubemap();
         else rlDisableTexture();
-    }*/
+    }
 
     // Disable all possible vertex array objects (or VBOs)
     rlDisableVertexArray();
@@ -350,7 +354,7 @@ Mesh GenMeshPlaneY(float width, float length, int resX, int resZ)
     {
         for (int u = 0; u < resX; u++)
         {
-            texcoords[u + v*resX] = (Vector2){ (float)u/(resX - 1), (float)v/(resZ - 1) };
+            texcoords[u + v*resX] = (Vector2){ (float)u/(resX - 1), 1.0f - (float)v/(resZ - 1) };
         }
     }
 
@@ -366,6 +370,7 @@ Mesh GenMeshPlaneY(float width, float length, int resX, int resZ)
         triangles[t++] = i + 1;
         triangles[t++] = i + resX + 1;
         triangles[t++] = i + resX;
+
         triangles[t++] = i;
         triangles[t++] = i + 1;
         triangles[t++] = i + resX;

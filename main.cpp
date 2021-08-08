@@ -42,6 +42,10 @@ int main()
     //Load shaders
     Shader lkgFragment = LoadShaderSingleFile("./Shaders/quilt.shader"); // Quilt shader
 
+    // Scene
+    //Scene* scene = new ClockScene();
+    Scene* scene = new PongScene();
+
     // LKG Config
     std::ifstream config_file("display.cfg");
     LKGConfig config(config_file);
@@ -49,8 +53,8 @@ int main()
     int ri = 0;
     int bi = 2;
     
-    float tile[2] = {(float)8,(float)6};
-    //float tile[2] = {(float)8,(float)4};
+    std::pair<int, int> tiles = scene->GetTiles();
+    std::pair<int, int> tileRes = scene->GetTileResolution();
     
     // Initialize shader uniforms
     int quiltTexLoc = GetShaderLocation(lkgFragment, "texture1");
@@ -67,23 +71,14 @@ int main()
     int biLoc = GetShaderLocation(lkgFragment, "bi");
     SetShaderValue(lkgFragment, biLoc, &bi, SHADER_UNIFORM_INT);
     int tileLoc = GetShaderLocation(lkgFragment, "tile");
+    float tile[2] = { tiles.first, tiles.second };
     SetShaderValue(lkgFragment, tileLoc, tile, SHADER_UNIFORM_VEC2);
     
     // Render textures 8x6 (420x560)
-    RenderTexture2D quiltRT = LoadRenderTexture(2520, 2520);
-    const int TILE_WIDTH = 315;
-    const int TILE_HEIGHT = 420;
-    //RenderTexture2D quiltRT = LoadRenderTexture(1008, 1008);
-    //const int TILE_WIDTH = 126;
-    //const int TILE_HEIGHT = 168;
-    //RenderTexture2D quiltRT = LoadRenderTexture(1344, 1344);
-    //const int TILE_WIDTH = 168;
-    //const int TILE_HEIGHT = 224;
-    //RenderTexture2D quiltRT = LoadRenderTexture(3360, 3360);
-    //const int TILE_WIDTH = 420;
-    //const int TILE_HEIGHT = 560;
-
-    int tileCount = tile[0] * tile[1];
+    RenderTexture2D quiltRT = LoadRenderTexture(tileRes.first * tiles.first, tileRes.second * tiles.second);
+    const int TILE_WIDTH = tileRes.first;
+    const int TILE_HEIGHT = tileRes.second;
+    const int TILE_COUNT = tiles.first * tiles.second;
     
     // Camera
     Camera3D camera = { 0 };
@@ -92,10 +87,6 @@ int main()
     camera.up = { 0, 1.0f, 0 };
     camera.fovy = 17.0f;
     camera.projection = CAMERA_PERSPECTIVE;
-
-    // Scene
-    //Scene* scene = new ClockScene();
-    Scene* scene = new PongScene();
     
     //SetTargetFPS(30);               // Set our viewer to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -104,26 +95,26 @@ int main()
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
         // Update
-	scene->Update();
+    scene->Update();
         
         // Draw
         //----------------------------------------------------------------------------------
         BeginTextureMode(quiltRT);
             ClearBackground(scene->GetClearColor());
-            for (int i = tileCount - 1; i >= 0; i--) {
+            for (int i = TILE_COUNT - 1; i >= 0; i--) {
                 rlViewport((i%(int)tile[0])*TILE_WIDTH, (floor(i/(int)tile[0]))*TILE_HEIGHT, TILE_WIDTH, TILE_HEIGHT);
                 
                 float movementAmount = tan((config.viewCone/2.0f) * DEG2RAD) * LKG_DISTANCE;
-                float offset = -movementAmount + ((movementAmount * 2)/tileCount) * i;
+                float offset = -movementAmount + ((movementAmount * 2)/TILE_COUNT) * i;
                 camera.position.x = offset;
                 camera.target.x = offset;
                 
                 BeginMode3DLG(camera, (float)TILE_WIDTH/(float)TILE_HEIGHT, -offset);
-            	//Rotate stand angle
-            	rlPushMatrix();
-            	rlRotatef(LKG_ANGLE, 1, 0, 0);
-		    scene->Draw();
-            	rlPopMatrix();
+                //Rotate stand angle
+                rlPushMatrix();
+                rlRotatef(LKG_ANGLE, 1, 0, 0);
+            scene->Draw();
+                rlPopMatrix();
                 EndMode3D();
             }
         EndTextureMode();
@@ -131,12 +122,12 @@ int main()
         BeginDrawing();
             //ClearBackground(RAYWHITE);
             BeginShaderMode(lkgFragment);
-                //SetShaderValueTexture(lkgFragment, quiltTexLoc, quiltRT.texture);
-                //DrawRectangle(0,0, 1536, 2048, WHITE);
-	        DrawTexture(quiltRT.texture, 0, 0, WHITE);
+                SetShaderValueTexture(lkgFragment, quiltTexLoc, quiltRT.texture);
+                DrawRectangle(0,0, 1536, 2048, WHITE);
+                //DrawTexture(quiltRT.texture, 0, 0, WHITE);
             EndShaderMode();
 
-            //DrawFPSSize(50, 50, 90);
+            DrawFPSSize(50, 50, 90);
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
