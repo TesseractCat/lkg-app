@@ -18,13 +18,12 @@
 #define LKG_ANGLE 25
 
 Shader litShader;
-int litShaderShadowLoc;
 
 Material litMaterial;
 Mesh cubeMesh;
 Model testModel;
 
-void DrawScene(bool shadow) {
+void DrawScene() {
     const float BACKDROP_DIST = -4.5f;
     
     float game_time = GetTime();// * 0.25f;
@@ -55,51 +54,61 @@ void DrawScene(bool shadow) {
         DrawModel(testModel, Vector3{0,0,0}, 0.15f, WHITE);
     rlPopMatrix();*/
 
-    Matrix transforms[100];
-    Color colors[100];
+    Matrix transforms[1500];
+    Color colors[1500];
     int instanceIdx = 0;
+
+    auto drawCube = [&] (Matrix m, Color c) {
+        c.a = 0;
+	colors[instanceIdx] = c;
+        transforms[instanceIdx++] = m;
+        c.a = 255;
+	colors[instanceIdx] = c;
+        transforms[instanceIdx++] = m;
+    };
     
     //Seconds
     litMaterial.maps[MATERIAL_MAP_DIFFUSE].color = RED;
     rlPushMatrix();
 	rlRotatef(fmod(calender_time.tm_sec, 60.0f)/60.0f * -360.0f, 0, 0, 1);
-        rlScalef(0.05f, 1.25f, 0.05f);
+        rlScalef(0.05f, 1.1f, 0.05f);
         rlTranslatef(0, 0.6666f, 0);
-        //DrawMesh(cubeMesh, litMaterial, MatrixIdentity());
-	colors[instanceIdx] = RED;
-        transforms[instanceIdx++] = rlGetMatrixTransform();
+	drawCube(rlGetMatrixTransform(), RED);
     rlPopMatrix();
     //Minutes
     //litMaterial.maps[MATERIAL_MAP_DIFFUSE].color = GRAY;
     rlPushMatrix();
 	rlRotatef(fmod(calender_time.tm_min, 60.0f)/60.0f * -360.0f, 0, 0, 1);
-        rlScalef(0.05f, 1.25f, 0.05f);
+        rlScalef(0.05f, 1.1f, 0.05f);
         rlTranslatef(0, 0.6666f, 1.5f);
-        //DrawMesh(cubeMesh, litMaterial, MatrixIdentity());
-	colors[instanceIdx] = BLUE;
-        transforms[instanceIdx++] = rlGetMatrixTransform();
+	drawCube(rlGetMatrixTransform(), DARKGRAY);
     rlPopMatrix();
     //Hours
     //litMaterial.maps[MATERIAL_MAP_DIFFUSE].color = GRAY;
     rlPushMatrix();
 	rlRotatef(fmod(calender_time.tm_hour % 12, 12.0f)/12.0f * -360.0f, 0, 0, 1);
-        rlScalef(0.05f, 0.9f, 0.05f);
+        rlScalef(0.05f, 0.8f, 0.05f);
         rlTranslatef(0, 0.6666f, -1.5f);
-        //DrawMesh(cubeMesh, litMaterial, MatrixIdentity());
-	colors[instanceIdx] = GREEN;
-        transforms[instanceIdx++] = rlGetMatrixTransform();
+	drawCube(rlGetMatrixTransform(), DARKGRAY);
     rlPopMatrix();
 
-    for (int i = 0; i < 50; i++) {
+    /*for (int i = 0; i < 250; i++) {
         rlPushMatrix();
             rlScalef(0.1f, 0.1f, 0.1f);
             rlRotatef((i/50.0f) * 360.0f, 0, 0, 1);
-            rlTranslatef(20.0f + sin(GetTime() + i), 0, 0);
-	    colors[instanceIdx] = GRAY;
-            transforms[instanceIdx++] = rlGetMatrixTransform();
+            rlTranslatef(18.0f + sin(GetTime() * 3.0f + i) * 3.0f, 0, (i/50) * -3.0f + 7.5f);
+	    drawCube(rlGetMatrixTransform(), BLUE);
+        rlPopMatrix();
+    }*/
+    for (int i = 0; i < 12; i++) {
+        rlPushMatrix();
+            rlScalef(0.1f, 0.1f, 0.1f);
+            rlRotatef((i/12.0f) * 360.0f, 0, 0, 1);
+            rlTranslatef(19.0f + sin(GetTime() * 3.0f + i), 0, 0);
+	    drawCube(rlGetMatrixTransform(), DARKGRAY);
         rlPopMatrix();
     }
-    DrawMeshInstancedSimple(cubeMesh, litMaterial, transforms, colors, instanceIdx);
+    DrawMeshInstancedC(cubeMesh, litMaterial, transforms, colors, instanceIdx);
 }
 
 int main()
@@ -124,7 +133,6 @@ int main()
     Shader lkgFragment = LoadShaderSingleFile("./Shaders/quilt.shader"); // Quilt shader
 
     litShader = LoadShaderSingleFile("./Shaders/lit_instanced.shader"); // Lit shader
-    litShaderShadowLoc = GetShaderLocation(litShader, "shadow");
     //litShader.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation(litShader, "matModel");
     litShader.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocationAttrib(litShader, "matModel");
     litShader.locs[SHADER_LOC_COLOR_DIFFUSE] = GetShaderLocationAttrib(litShader, "colDiffuse");
@@ -135,9 +143,6 @@ int main()
     SetShaderValue(litShader, GetShaderLocation(litShader, "lightPos"), &lightPos, SHADER_UNIFORM_VEC3);
     float planeZ = -2.0f;
     SetShaderValue(litShader, GetShaderLocation(litShader, "planeZ"), &planeZ, SHADER_UNIFORM_FLOAT);
-    int zero = 0;
-    int one = 1;
-    SetShaderValue(litShader, litShaderShadowLoc, &zero, SHADER_UNIFORM_INT);
 
     litMaterial = LoadMaterialDefault(); // Lit material
     litMaterial.shader = litShader;
@@ -229,14 +234,8 @@ int main()
             	//Rotate stand angle
             	rlPushMatrix();
             	rlRotatef(LKG_ANGLE, 1, 0, 0);
-		    SetShaderValue(litShader, litShaderShadowLoc, &zero, SHADER_UNIFORM_INT);
 	    	    BeginShaderMode(litShader);
-            	        DrawScene(false);
-	            EndShaderMode();
-
-		    SetShaderValue(litShader, litShaderShadowLoc, &one, SHADER_UNIFORM_INT);
-	    	    BeginShaderMode(litShader);
-            	        DrawScene(true);
+            	        DrawScene();
 	            EndShaderMode();
             	rlPopMatrix();
                 EndMode3D();

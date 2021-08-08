@@ -17,7 +17,6 @@ uniform mat4 mvp;
 uniform mat4 matView;
 uniform mat4 matProjection;
 
-uniform int shadow;
 uniform vec3 lightPos;
 uniform float planeZ;
 
@@ -34,7 +33,7 @@ void main()
     vec3 lightDir = normalize(vec3(-3.0, 5.0, 8.0) - modelPos.xyz);
     float diff = (max(dot(vertexNormal, lightDir), 0.0) + 0.2);
 
-    if (shadow == 0) {
+    if (colDiffuse.a < 0.5) {
         //float gradient = (modelPos.y + 1.0)/2.0;
         //gradient = mix(0.3, 1.0, gradient);
 	fragColor = vec4((diff * colDiffuse).xyz, 1.0);
