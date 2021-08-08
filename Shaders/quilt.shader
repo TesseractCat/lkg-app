@@ -32,8 +32,8 @@ void main()
 
 //See: https://github.com/patriciogonzalezvivo/glslViewer/blob/main/src/shaders/holoplay.h
 // QUILT TEXTURE
-//uniform sampler2D texture0;
-uniform sampler2D texture1;
+uniform sampler2D texture0;
+//uniform sampler2D texture1;
 
 //uniform vec2        resolution;
 vec2 resolution = vec2(1536, 2048);
@@ -73,8 +73,6 @@ void main (void) {
     vec3 color = vec3(0.0);
     vec2 uv = gl_FragCoord.xy;
     vec2 st = uv/resolution.xy;
-    //st.x = (1.0 - st.x);
-    //st.y = (1.0 - st.y);
     
     float pitch = -resolution.x / holoPlayCalibration.x  * holoPlayCalibration.y * sin(atan(abs(holoPlayCalibration.z)));
     float tilt = resolution.y / (resolution.x * holoPlayCalibration.z);
@@ -83,9 +81,9 @@ void main (void) {
     float subp2 = subp * pitch;
     
     float a = (-st.x - st.y * tilt) * pitch - holoPlayCalibration.w;
-    color.r = texture(texture1, quilt_map(vec3(tile.xy, tile.x * tile.y), st, a-holoPlayRB.x*subp2)).r;
-    color.g = texture(texture1, quilt_map(vec3(tile.xy, tile.x * tile.y), st, a-subp2)).g;
-    color.b = texture(texture1, quilt_map(vec3(tile.xy, tile.x * tile.y), st, a-holoPlayRB.y*subp2)).b;
+    color.r = texture(texture0, quilt_map(vec3(tile.xy, tile.x * tile.y), st, a-holoPlayRB.x*subp2)).r;
+    color.g = texture(texture0, quilt_map(vec3(tile.xy, tile.x * tile.y), st, a-subp2)).g;
+    color.b = texture(texture0, quilt_map(vec3(tile.xy, tile.x * tile.y), st, a-holoPlayRB.y*subp2)).b;
     
     #if defined(HOLOPLAY_DEBUG_CENTER)
     // Mark center line only in central view
@@ -94,7 +92,7 @@ void main (void) {
     color.b = color.b * 0.001 + st.y;
     #elif defined(HOLOPLAY_DEBUG)
     // use quilt texture
-    color = texture(texture1, st).rgb;
+    color = texture(texture0, st).rgb;
     #endif
     
     finalColor = vec4(color,1.0);
