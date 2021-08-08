@@ -90,7 +90,7 @@ typedef struct float4 {
     float v[4];
 } float4;
 
-void DrawMeshInstancedSimple(Mesh mesh, Material material, Matrix *transforms, Color *colors, int instances)
+void DrawMeshInstancedC(Mesh mesh, Material material, Matrix *transforms, Color *colors, int instances)
 {
     // Check instancing
     if (instances <= 1) return;
@@ -107,32 +107,6 @@ void DrawMeshInstancedSimple(Mesh mesh, Material material, Matrix *transforms, C
 
     // Send required data to shader (matrices, values)
     //-----------------------------------------------------
-    // Upload to shader material.colDiffuse
-    /*if (material.shader.locs[SHADER_LOC_COLOR_DIFFUSE] != -1)
-    {
-        float values[4] = {
-            (float)material.maps[MATERIAL_MAP_DIFFUSE].color.r/255.0f,
-            (float)material.maps[MATERIAL_MAP_DIFFUSE].color.g/255.0f,
-            (float)material.maps[MATERIAL_MAP_DIFFUSE].color.b/255.0f,
-            (float)material.maps[MATERIAL_MAP_DIFFUSE].color.a/255.0f
-        };
-
-        rlSetUniform(material.shader.locs[SHADER_LOC_COLOR_DIFFUSE], values, SHADER_UNIFORM_VEC4, 1);
-    }*/
-
-    // Upload to shader material.colSpecular (if location available)
-    if (material.shader.locs[SHADER_LOC_COLOR_SPECULAR] != -1)
-    {
-        float values[4] = {
-            (float)material.maps[SHADER_LOC_COLOR_SPECULAR].color.r/255.0f,
-            (float)material.maps[SHADER_LOC_COLOR_SPECULAR].color.g/255.0f,
-            (float)material.maps[SHADER_LOC_COLOR_SPECULAR].color.b/255.0f,
-            (float)material.maps[SHADER_LOC_COLOR_SPECULAR].color.a/255.0f
-        };
-
-        rlSetUniform(material.shader.locs[SHADER_LOC_COLOR_SPECULAR], values, SHADER_UNIFORM_VEC4, 1);
-    }
-
     // Get a copy of current matrices to work with,
     // just in case stereo render is required and we need to modify them
     // NOTE: At this point the modelview matrix just contains the view matrix (camera)
@@ -179,11 +153,14 @@ void DrawMeshInstancedSimple(Mesh mesh, Material material, Matrix *transforms, C
         rlSetVertexAttributeDivisor(material.shader.locs[SHADER_LOC_MATRIX_MODEL] + i, 1);
     }
 
+    // Create color VBO
     instanceColorsVboId = rlLoadVertexBuffer(instanceColors, instances*sizeof(float4), false);
+
     rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_COLOR_DIFFUSE]);
     rlSetVertexAttribute(material.shader.locs[SHADER_LOC_COLOR_DIFFUSE], 4, RL_FLOAT, 0, sizeof(float4), 0);
     rlSetVertexAttributeDivisor(material.shader.locs[SHADER_LOC_COLOR_DIFFUSE], 1);
     
+    // Disable VAO and VBOs
     rlDisableVertexBuffer();
     rlDisableVertexArray();
     
