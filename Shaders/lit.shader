@@ -1,5 +1,6 @@
-#version 310 es
 precision mediump float;
+
+#ifdef VERTEX
 
 // Input vertex attributes
 in vec3 vertexPosition;
@@ -12,6 +13,7 @@ uniform vec4 colDiffuse;
 // Input uniform values
 uniform mat4 mvp;
 
+//in mat4 matModel;
 uniform mat4 matModel;
 uniform mat4 matView;
 uniform mat4 matProjection;
@@ -34,10 +36,10 @@ void main()
     float diff = (max(dot(vertexNormal, lightDir), 0.0) + 0.2);
 
     if (shadow == 0) {
-        float gradient = (modelPos.y + 1.0)/2.0;
-        gradient = mix(0.3, 1.0, gradient);
-	fragColor = vec4((diff * colDiffuse * gradient).xyz, 1.0);
-        gl_Position = (mvp)*vec4(vertexPosition, 1.0);
+        //float gradient = (modelPos.y + 1.0)/2.0;
+        //gradient = mix(0.3, 1.0, gradient);
+	fragColor = vec4((diff * colDiffuse).xyz, 1.0);
+        gl_Position = (matProjection*matView*matModel)*vec4(vertexPosition, 1.0);
         return;
     }
     
@@ -45,6 +47,7 @@ void main()
 
     //See: https://math.stackexchange.com/questions/35857/two-point-line-form-in-3d 
     vec3 A = ((vec4(vertexPosition, 1.0))).xyz;
+    A = modelPos.xyz;
     vec3 B = (vec4(lightPos, 1.0)).xyz;
 
     float viewPlaneZ = planeZ;//(matView*vec4(0,0,planeZ,1.0)).z;
@@ -55,5 +58,19 @@ void main()
     float z = viewPlaneZ;
     
     // Calculate final vertex position
-    gl_Position = (mvp*vec4(x, y, z, 1.0));
+    gl_Position = matProjection*(matView*vec4(x, y, z, 1.0));
 }
+
+#endif
+#ifdef FRAGMENT
+
+// IN OUT
+in vec2 fragTexCoord;
+in vec4 fragColor;
+out vec4 finalColor;
+
+void main (void) {
+    finalColor = fragColor;
+}
+
+#endif
