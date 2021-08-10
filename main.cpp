@@ -17,9 +17,8 @@
 #include "scene.h"
 #include "clock.h"
 #include "pong.h"
-
-#define LKG_DISTANCE 20.0f
-#define LKG_ANGLE 25
+//#include "console.h"
+#include "graph.h"
 
 int main()
 {
@@ -44,7 +43,9 @@ int main()
 
     // Scene
     //Scene* scene = new ClockScene();
-    Scene* scene = new PongScene();
+    //Scene* scene = new PongScene();
+    //Scene* scene = new ConsoleScene();
+    Scene* scene = new GraphScene();
 
     // LKG Config
     std::ifstream config_file("display.cfg");
@@ -53,6 +54,7 @@ int main()
     int ri = 0;
     int bi = 2;
     
+    std::pair<float, float> angleDistance = scene->GetAngleDistance();
     std::pair<int, int> tiles = scene->GetTiles();
     std::pair<int, int> tileRes = scene->GetTileResolution();
     
@@ -82,7 +84,7 @@ int main()
     
     // Camera
     Camera3D camera = { 0 };
-    camera.position = { 0, 0, LKG_DISTANCE };
+    camera.position = { 0, 0, angleDistance.second };
     camera.target = { 0, 0, 0 };
     camera.up = { 0, 1.0f, 0 };
     camera.fovy = 17.0f;
@@ -104,7 +106,7 @@ int main()
             for (int i = TILE_COUNT - 1; i >= 0; i--) {
                 rlViewport((i%(int)tile[0])*TILE_WIDTH, (floor(i/(int)tile[0]))*TILE_HEIGHT, TILE_WIDTH, TILE_HEIGHT);
                 
-                float movementAmount = tan((config.viewCone/2.0f) * DEG2RAD) * LKG_DISTANCE;
+                float movementAmount = tan((config.viewCone/2.0f) * DEG2RAD) * angleDistance.second;
                 float offset = -movementAmount + ((movementAmount * 2)/TILE_COUNT) * i;
                 camera.position.x = offset;
                 camera.target.x = offset;
@@ -112,15 +114,15 @@ int main()
                 BeginMode3DLG(camera, (float)TILE_WIDTH/(float)TILE_HEIGHT, -offset);
                 //Rotate stand angle
                 rlPushMatrix();
-                rlRotatef(LKG_ANGLE, 1, 0, 0);
-            scene->Draw();
+                rlRotatef(angleDistance.first, 1, 0, 0);
+                    scene->Draw();
                 rlPopMatrix();
                 EndMode3D();
             }
         EndTextureMode();
 
         BeginDrawing();
-            //ClearBackground(RAYWHITE);
+            ClearBackground(RAYWHITE);
             BeginShaderMode(lkgFragment);
                 SetShaderValueTexture(lkgFragment, quiltTexLoc, quiltRT.texture);
                 DrawRectangle(0,0, 1536, 2048, WHITE);
