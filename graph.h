@@ -133,14 +133,8 @@ public:
         };
 
         const float LINE_WIDTH = 0.15f;
-        const float GRAPH_SEGMENT = 0.1f;
-        const Color LINE_COLOR = Color{48,192,178,255};
-        for (float x = -2.1f; x <= 2.1f; x += GRAPH_SEGMENT) {
-            float a = x*3.0f + gameTime;
-            float b = (x + GRAPH_SEGMENT)*3.0f + gameTime;
-            drawLine(Vector3{x, sin(a), cos(a)},
-                    Vector3{x + GRAPH_SEGMENT, sin(b), cos(b)}, LINE_WIDTH, LINE_COLOR);
-        }
+        const float GRAPH_SEGMENT = 0.125f;
+        const Color LINE_COLOR = Color{38,182,128,255};
 
         auto drawWireCube = [&] (float s) {
             drawLine(Vector3{s, s, s}, Vector3{-s, s, s}, LINE_WIDTH, LINE_COLOR); // -
@@ -156,24 +150,56 @@ public:
             drawLine(Vector3{-s, s, s}, Vector3{-s, -s, s}, LINE_WIDTH, LINE_COLOR);
             drawLine(Vector3{-s, s, -s}, Vector3{-s, -s, -s}, LINE_WIDTH, LINE_COLOR);
         };
+        auto drawWireCircle = [&] (float radius, int segments) {
+            for (int i = 0; i < segments; i++) {
+                float angle = ((float)i/(float)segments) * PI * 2.0f;
+                float next_angle = ((float)(i+1)/(float)segments) * PI * 2.0f;
+                auto p = Vector3{cos(angle), sin(angle), 0};
+                auto n = Vector3{cos(next_angle), sin(next_angle), 0};
+                drawLine(Vector3Scale(p, radius), Vector3Scale(n, radius), LINE_WIDTH, LINE_COLOR);
+            }
+        };
 
         rlPushMatrix();
+            rlTranslatef(0, 1.5f, 0);
+            for (float x = -2.1f; x <= 2.1f; x += GRAPH_SEGMENT) {
+                float a = x*3.0f + gameTime;
+                float b = (x + GRAPH_SEGMENT)*3.0f + gameTime;
+                drawLine(Vector3{x, sin(a), cos(a)},
+                        Vector3{x + GRAPH_SEGMENT, sin(b), cos(b)}, LINE_WIDTH, LINE_COLOR);
+            }
+        rlPopMatrix();
+
+        rlPushMatrix();
+            float space = 0.4f;
+            rlTranslatef(0.8f, -1.5f, -2.0f * space);
+            for (int i = -2; i <= 2; i++) {
+                rlTranslatef(0, 0, space);
+                //rlRotatef(((i+5)/10.0f) * 180.0f, 0, 1, 0);
+                drawWireCircle(0.6f + sin(gameTime + i * space) * 0.3f, 18);
+            }
+        rlPopMatrix();
+
+        rlPushMatrix();
+        rlTranslatef(-0.8f, -1.5f, 0);
         rlRotatef(gameTime * 5.0f, 1, 1, 1);
-            drawWireCube(1.0f + sin(gameTime) * 0.5f);
-            //drawWireCube(1.0f + sin(gameTime + 0.8f) * 0.3f);
-            //drawWireCube(1.0f + sin(gameTime + 1.9f) * 0.4f);
+            drawWireCube(0.6f + sin(gameTime) * 0.25f);
+        rlRotatef(gameTime * 5.0f, 1, 1, 1);
+            drawWireCube(0.6f + sin(gameTime + 0.9f) * 0.25f);
         rlPopMatrix();
 
         // Lines
-        DrawMeshInstancedC(quadMesh, lineMaterial, transforms, colors, instanceIdx);
+        //BeginBlendMode(BLEND_ADDITIVE);
+            DrawMeshInstancedC(quadMesh, lineMaterial, transforms, colors, instanceIdx);
+        //EndBlendMode();
     }
 
     Color GetClearColor() {
         return Color{0,0,0,255};
     }
     std::pair<int, int> GetTileResolution() {
-        //return std::pair<int, int>(126, 168);
-        return std::pair<int, int>(168, 224);
+        //return std::pair<int, int>(168, 224);
+        return std::pair<int, int>(252, 336);
         //return std::pair<int, int>(315, 420);
         //return std::pair<int, int>(420, 560);
     }
