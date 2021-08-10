@@ -2,9 +2,22 @@
 #define RAYLIB_EXTENSIONS_H
 
 #include "rlgl.h"
+#include "raymath.h"
 
 #include <GLES3/gl3.h>
 #include <GLES3/gl3ext.h>
+
+Vector4 Vector4Transform(Vector4 q, Matrix mat)
+{
+    Vector4 result = { 0 };
+
+    result.x = mat.m0*q.x + mat.m4*q.y + mat.m8*q.z + mat.m12*q.w;
+    result.y = mat.m1*q.x + mat.m5*q.y + mat.m9*q.z + mat.m13*q.w;
+    result.z = mat.m2*q.x + mat.m6*q.y + mat.m10*q.z + mat.m14*q.w;
+    result.w = mat.m3*q.x + mat.m7*q.y + mat.m11*q.z + mat.m15*q.w;
+
+    return result;
+}
 
 float GetRandomFloat(float min, float max) {
     return min + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(max-min)));
@@ -97,7 +110,7 @@ typedef struct float4 {
     float v[4];
 } float4;
 
-void DrawMeshInstancedC(Mesh mesh, Material material, Matrix *transforms, Color *colors, int instances)
+void DrawMeshInstancedC(Mesh mesh, Material material, Matrix *transforms, Vector4 *colors, int instances)
 {
     // Check instancing
     if (instances <= 1) return;
@@ -135,11 +148,11 @@ void DrawMeshInstancedC(Mesh mesh, Material material, Matrix *transforms, Color 
     // Fill buffer with instances transformations as float16 arrays
     for (int i = 0; i < instances; i++) instanceTransforms[i] = MatrixToFloatV(transforms[i]);
     for (int i = 0; i < instances; i++) {
-	float4 c = { 0 };
-	c.v[0] = (float)colors[i].r/255.0f;
-	c.v[1] = (float)colors[i].g/255.0f;
-	c.v[2] = (float)colors[i].b/255.0f;
-	c.v[3] = (float)colors[i].a/255.0f;
+        float4 c = { 0 };
+        c.v[0] = colors[i].x;
+        c.v[1] = colors[i].y;
+        c.v[2] = colors[i].z;
+        c.v[3] = colors[i].w;
         instanceColors[i] = c;
     }
     

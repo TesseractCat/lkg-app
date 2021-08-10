@@ -55,15 +55,15 @@ public:
         std::tm calender_time = *std::localtime( std::addressof(now) ) ;
 
         Matrix transforms[500];
-        Color colors[500];
+        Vector4 colors[500];
         int instanceIdx = 0;
 
         auto drawCube = [&] (Matrix m, Color c) {
             c.a = 0;
-            colors[instanceIdx] = c;
+            colors[instanceIdx] = ColorNormalize(c);
             transforms[instanceIdx++] = m;
             c.a = 255;
-            colors[instanceIdx] = c;
+            colors[instanceIdx] = ColorNormalize(c);
             transforms[instanceIdx++] = m;
         };
 
