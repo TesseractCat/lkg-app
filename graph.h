@@ -81,9 +81,9 @@ public:
     void Draw() {
         float gameTime = GetTime() * 2.0f;
 
-        Matrix transforms[1500];
-        Vector4 colors[1500];
-        int instanceIdx = 0;
+        Matrix lineTransforms[1500];
+        Vector4 lineColors[1500];
+        int lineInstanceIdx = 0;
 
         Matrix textTransforms[1500];
         Vector4 textColors[1500];
@@ -115,12 +115,12 @@ public:
             Vector2 screenDir = Vector2Normalize(Vector2Subtract(screenEnd, screenStart));
 
             // Instance values
-            colors[instanceIdx] = Vector4{screenDir.x,screenDir.y,width,packColor(ColorNormalize(color))};
-            transforms[instanceIdx++] = MatrixMultiply(matTransform, rlGetMatrixTransform());
+            lineColors[lineInstanceIdx] = Vector4{screenDir.x,screenDir.y,width,packColor(ColorNormalize(color))};
+            lineTransforms[lineInstanceIdx++] = MatrixMultiply(matTransform, rlGetMatrixTransform());
         };
         auto drawChar = [&] (Matrix m, Color col, char c) {
             textColors[textInstanceIdx] = ColorNormalize(Color{col.r,col.g,col.b,c-32});
-            textTransforms[textInstanceIdx++] = m;
+            textTransforms[textInstanceIdx++] = MatrixMultiply(MatrixScale(0.5f, 1.0f, 1.0f), m);
         };
         auto drawText = [&] (std::string text, Color col, float scale) {
             rlPushMatrix();
@@ -134,7 +134,7 @@ public:
 
         const float LINE_WIDTH = 0.15f;
         const float GRAPH_SEGMENT = 0.125f;
-        const Color LINE_COLOR = Color{38,182,128,255};
+        const Color LINE_COLOR = Color{0,0,0,255};//Color{38,182,128,255};
 
         auto drawWireCube = [&] (float s) {
             drawLine(Vector3{s, s, s}, Vector3{-s, s, s}, LINE_WIDTH, LINE_COLOR); // -
@@ -160,17 +160,7 @@ public:
             }
         };
 
-        rlPushMatrix();
-            rlTranslatef(0, 1.5f, 0);
-            for (float x = -2.1f; x <= 2.1f; x += GRAPH_SEGMENT) {
-                float a = x*3.0f + gameTime;
-                float b = (x + GRAPH_SEGMENT)*3.0f + gameTime;
-                drawLine(Vector3{x, sin(a), cos(a)},
-                        Vector3{x + GRAPH_SEGMENT, sin(b), cos(b)}, LINE_WIDTH, LINE_COLOR);
-            }
-        rlPopMatrix();
-
-        rlPushMatrix();
+        /*rlPushMatrix();
             float space = 0.4f;
             rlTranslatef(0.8f, -1.5f, -2.0f * space);
             for (int i = -2; i <= 2; i++) {
@@ -178,24 +168,40 @@ public:
                 //rlRotatef(((i+5)/10.0f) * 180.0f, 0, 1, 0);
                 drawWireCircle(0.6f + sin(gameTime + i * space) * 0.3f, 18);
             }
+        rlPopMatrix();*/
+
+        rlPushMatrix();
+            rlTranslatef(0, 1.25f, 0);
+            for (float x = -1.8f; x <= 1.8f; x += GRAPH_SEGMENT) {
+                float a = x*3.0f + gameTime;
+                float b = (x + GRAPH_SEGMENT)*3.0f + gameTime;
+                drawLine(Vector3{x, sin(a), cos(a)},
+                        Vector3{x + GRAPH_SEGMENT, sin(b), cos(b)}, LINE_WIDTH, LINE_COLOR);
+            }
+        rlPopMatrix();
+        rlPushMatrix();
+            rlTranslatef(0.0f, -1.25f, 0);
+            rlRotatef(gameTime * 5.0f, 1, 1, 1);
+                drawWireCube(0.6f);
+        rlPopMatrix();
+        rlPushMatrix();
+            rlScalef(1.8f, 2.2f, 1.0f);
+            drawWireCube(1.0f);
         rlPopMatrix();
 
         rlPushMatrix();
-        rlTranslatef(-0.8f, -1.5f, 0);
-        rlRotatef(gameTime * 5.0f, 1, 1, 1);
-            drawWireCube(0.6f + sin(gameTime) * 0.25f);
-        rlRotatef(gameTime * 5.0f, 1, 1, 1);
-            drawWireCube(0.6f + sin(gameTime + 0.9f) * 0.25f);
+            rlTranslatef(-1.35f, 1.0f, 0);
+            drawText("Hello world", BLACK, 0.7f);
         rlPopMatrix();
 
         // Lines
         //BeginBlendMode(BLEND_ADDITIVE);
-            DrawMeshInstancedC(quadMesh, lineMaterial, transforms, colors, instanceIdx);
-        //EndBlendMode();
+        DrawMeshInstancedC(quadMesh, lineMaterial, lineTransforms, lineColors, lineInstanceIdx);
+        DrawMeshInstancedC(quadMesh, textMaterial, textTransforms, textColors, textInstanceIdx);
     }
 
     Color GetClearColor() {
-        return Color{0,0,0,255};
+        return Color{220,220,220,255};
     }
     std::pair<int, int> GetTileResolution() {
         //return std::pair<int, int>(168, 224);
@@ -203,5 +209,5 @@ public:
         //return std::pair<int, int>(315, 420);
         //return std::pair<int, int>(420, 560);
     }
-    std::pair<float, float> GetAngleDistance() { return std::pair<float, float>(25.0f, 20.0f); }
+    std::pair<float, float> GetAngleDistance() { return std::pair<float, float>(30.0f, 20.0f); }
 };

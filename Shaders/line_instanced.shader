@@ -63,9 +63,8 @@ in vec4 fragColor;
 out vec4 finalColor;
 
 void main (void) {
-    //finalColor = fragColor;
-    finalColor = mix(fragColor, mix(fragColor, vec4(1,1,1,1), 0.65), pow(sin(fragTexCoord.x * 3.14159), 9.0));
-    //finalColor = mix(fragColor, vec4(1,1,1,1), sin(fragTexCoord.x * 3.14159));
+    finalColor = fragColor;
+    //finalColor = mix(fragColor, mix(fragColor, vec4(1,1,1,1), 0.65), pow(sin(fragTexCoord.x * 3.14159), 9.0));
 }
 
 #endif
