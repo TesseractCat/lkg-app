@@ -183,29 +183,27 @@ public:
         DrawMeshInstancedC(cubeMesh, litMaterial, transforms, colors, instanceIdx);
 
         //Score
-        drawText("HeLo ThEr", WHITE, 0.4f);
-
         //Player 1
         rlPushMatrix();
         rlTranslatef(-1.6f, 0.5f, -0.5f);
-            drawChar(rlGetMatrixTransform(), WHITE, '0' + player2Score);
+            drawChar(rlGetMatrixTransform(), Color{255,255,255,255}, '0' + player2Score);
         rlTranslatef(0, 0, -0.5f);
-            drawChar(rlGetMatrixTransform(), WHITE, '0' + player2Score);
+            drawChar(rlGetMatrixTransform(), Color{215,255,255,255}, '0' + player2Score);
         rlTranslatef(0, 0, -0.5f);
-            drawChar(rlGetMatrixTransform(), WHITE, '0' + player2Score);
+            drawChar(rlGetMatrixTransform(), Color{175,255,255,255}, '0' + player2Score);
         rlTranslatef(0, 0, -0.5f);
-            drawChar(rlGetMatrixTransform(), WHITE, '0' + player2Score);
+            drawChar(rlGetMatrixTransform(), Color{135,255,255,255}, '0' + player2Score);
         rlPopMatrix();
         //Player 2
         rlPushMatrix();
         rlTranslatef(1.6f, -0.5f, -0.5f);
-            drawChar(rlGetMatrixTransform(), WHITE, '0' + player1Score);
+            drawChar(rlGetMatrixTransform(), Color{255,255,255,255}, '0' + player1Score);
         rlTranslatef(0, 0, -0.5f);
-            drawChar(rlGetMatrixTransform(), WHITE, '0' + player1Score);
+            drawChar(rlGetMatrixTransform(), Color{255,215,255,255}, '0' + player1Score);
         rlTranslatef(0, 0, -0.5f);
-            drawChar(rlGetMatrixTransform(), WHITE, '0' + player1Score);
+            drawChar(rlGetMatrixTransform(), Color{255,175,255,255}, '0' + player1Score);
         rlTranslatef(0, 0, -0.5f);
-            drawChar(rlGetMatrixTransform(), WHITE, '0' + player1Score);
+            drawChar(rlGetMatrixTransform(), Color{255,135,255,255}, '0' + player1Score);
         rlPopMatrix();
 
         DrawMeshInstancedC(quadMesh, textMaterial, textTransforms, textColors, textInstanceIdx);
