@@ -1,0 +1,1 @@
+console=serial0,115200 console=tty1 root=PARTUUID=73ba679f-02 rootfstype=ext4 elevator=deadline fsck.repair=no quiet rootwait fbcon=logo-pos:center cma=512M modules-load=dwc2

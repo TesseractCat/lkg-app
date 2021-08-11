@@ -1,0 +1,46 @@
+disable_overscan=1
+hdmi_force_hotplug=1
+
+[pi4]
+dtoverlay=vc4-kms-v3d
+max_framebuffers=2
+
+dtoverlay=sdtweak,overclock_50=100
+
+# dtoverlay=pivid-v4l2
+# dtoverlay=disable-bt
+
+avoid_warnings=1
+
+dtoverlay=act-led
+dtparam=act_led_trigger=none
+dtparam=act_led_activelow=off
+dtparam=pwr_led_trigger=none
+dtparam=pwr_led_activelow=off
+
+## disable ETH LED
+dtparam=eth_led0=4
+dtparam=eth_led1=4
+
+dtoverlay=dwc2,dr_mode=host
+enable_uart=1
+dtoverlay=uart4
+dtparam=audio=on
+
+[HDMI:1]
+framebuffer_width=768
+framebuffer_height=1024
+hdmi_ignore_edid=0xa5000080
+hdmi_group=2
+hdmi_mode=87
+hdmi_timings=1536 0 90 24 90 2048 0 14 2 10 0 0 0 60 0 216500000 0
+
+disable_splash=1
+
+over_voltage=4
+gpu_freq=750
+force_turbo=1
+
+gpio=22=op,pn,dl
+boot_delay=0
+gpu_mem=256
