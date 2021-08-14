@@ -71,7 +71,7 @@ public:
         rlPushMatrix();
             rlScalef(0.5f, 0.5f, 0.5f);
             rlTranslatef(position.x * 2, position.y * 2, position.z);
-            drawCube(rlGetMatrixTransform(), PINK);
+            //drawCube(rlGetMatrixTransform(), PINK);
         rlPopMatrix();
 
         rlPushMatrix();
