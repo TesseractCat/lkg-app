@@ -62,9 +62,14 @@ in vec2 fragTexCoord;
 in vec4 fragColor;
 out vec4 finalColor;
 
+uniform float glow;
+uniform float glowFalloff;
+
 void main (void) {
-    finalColor = fragColor;
-    //finalColor = mix(fragColor, mix(fragColor, vec4(1,1,1,1), 0.65), pow(sin(fragTexCoord.x * 3.14159), 9.0));
+    //finalColor = fragColor;
+    finalColor = mix(fragColor,
+        mix(fragColor, vec4(1,1,1,1), glow),
+        pow(sin(fragTexCoord.x * 3.14159), glowFalloff));
 }
 
 #endif

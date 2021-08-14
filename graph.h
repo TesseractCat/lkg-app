@@ -42,6 +42,10 @@ public:
         lineShader.locs[SHADER_LOC_COLOR_DIFFUSE] = GetShaderLocationAttrib(lineShader, "direction");
         lineShader.locs[SHADER_LOC_MATRIX_VIEW] = GetShaderLocation(lineShader, "matView");
         lineShader.locs[SHADER_LOC_MATRIX_PROJECTION] = GetShaderLocation(lineShader, "matProjection");
+        float glow = 0.7f;
+        float glowFalloff = 15.0f;
+        SetShaderValue(lineShader, GetShaderLocation(lineShader, "glow"), &glow, SHADER_UNIFORM_FLOAT);
+        SetShaderValue(lineShader, GetShaderLocation(lineShader, "glowFalloff"), &glowFalloff, SHADER_UNIFORM_FLOAT);
 
         lineMaterial = LoadMaterialDefault(); // Line material
         lineMaterial.shader = lineShader;
@@ -135,6 +139,7 @@ public:
         const float LINE_WIDTH = 0.15f;
         const float GRAPH_SEGMENT = 0.125f;
         const Color LINE_COLOR = Color{0,0,0,255};//Color{38,182,128,255};
+        //const Color LINE_COLOR = Color{38,182,128,255};
 
         auto drawWireCube = [&] (float s) {
             drawLine(Vector3{s, s, s}, Vector3{-s, s, s}, LINE_WIDTH, LINE_COLOR); // -
@@ -191,7 +196,7 @@ public:
 
         rlPushMatrix();
             rlTranslatef(-1.35f, 1.0f, 0);
-            drawText("Hello world", BLACK, 0.7f);
+            drawText("Hello world", LINE_COLOR, 0.7f);
         rlPopMatrix();
 
         // Lines
@@ -202,6 +207,7 @@ public:
 
     Color GetClearColor() {
         return Color{220,220,220,255};
+        //return Color{0,0,0,255};
     }
     std::pair<int, int> GetTileResolution() {
         //return std::pair<int, int>(168, 224);
