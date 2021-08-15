@@ -12,12 +12,6 @@
 #include "scene.h"
 #include "raylib_extensions.h"
 
-float packColor(Vector4 color) {
-   return floor(color.x * 128.0f + 0.5f)
-   	+ floor(color.z * 128.0f + 0.5f) * 129.0f
-   	+ floor(color.y * 128.0f + 0.5f) * 129.0f * 129.0f;
-}
-
 class GraphScene : public Scene
 {
 private:
@@ -28,6 +22,30 @@ private:
     Material textMaterial;
 
     Mesh quadMesh;
+
+    float PackColor(Vector4 color) {
+       return floor(color.x * 128.0f + 0.5f)
+        + floor(color.z * 128.0f + 0.5f) * 129.0f
+        + floor(color.y * 128.0f + 0.5f) * 129.0f * 129.0f;
+    }
+
+    // LINE
+    float LINE_WIDTH = 0.15f;
+    float GRAPH_SEGMENT = 0.125f;
+    Color LINE_COLOR = Color{255,255,255,255};//Color{38,182,128,255};
+    //const Color LINE_COLOR = Color{38,182,128,255};
+    void DrawLine(Vector3 start, Vector3 end, float width, Color color,
+            Matrix* transforms, Vector4* colors, int& instanceIdx);
+    void DrawCubeLines(float size,
+            Matrix* transforms, Vector4* colors, int& instanceIdx);
+    void DrawCircleLines(float radius, int segments,
+            Matrix* transforms, Vector4* colors, int& instanceIdx);
+
+    // TEXT
+    void DrawChar(Matrix m, Color col, char c,
+            Matrix* transforms, Vector4* colors, int& instanceIdx);
+    void DrawText(std::string text, Color col, float scale,
+            Matrix* transforms, Vector4* colors, int& instanceIdx);
 public:
     GraphScene() {
         std::cout << "[INITIALIZING SCENE]: Graph" << std::endl;
@@ -93,110 +111,43 @@ public:
         Vector4 textColors[1500];
         int textInstanceIdx = 0;
 
-        auto drawLine = [&] (Vector3 start, Vector3 end, float width, Color color) {
-            Vector3 midpoint = Vector3Lerp(start, end, 0.5f);
-            Vector3 direction = Vector3Normalize(Vector3Subtract(end, start));
-            float distance = Vector3Distance(end, start);
-
-            // Matrix Transformation
-            Matrix matTranslation = MatrixTranslate(midpoint.x, midpoint.y, midpoint.z);
-            Matrix matScale = MatrixScale(/*width*/0.0f, distance, 1.0f);
-
-            Quaternion fromToRotation = QuaternionFromVector3ToVector3(Vector3{0,1.0f,0}, direction);
-            Matrix matRotation = QuaternionToMatrix(fromToRotation);
-            Matrix matTransform = MatrixMultiply(MatrixMultiply(matScale, matRotation), matTranslation);
-
-            // Line screen direction
-            Matrix matModelView = MatrixMultiply(rlGetMatrixTransform(), rlGetMatrixModelview());
-            Matrix mvp = MatrixMultiply(matModelView, rlGetMatrixProjection());
-
-            Vector4 projStart = Vector4Transform(Vector4{start.x,start.y,start.z,1.0f}, mvp);
-            Vector2 screenStart = Vector2Scale(Vector2{projStart.x, projStart.y}, 1.0f/projStart.w);
-            screenStart.x *= 1536.0f/2048.0f;
-            Vector4 projEnd = Vector4Transform(Vector4{end.x,end.y,end.z,1.0f}, mvp);
-            Vector2 screenEnd = Vector2Scale(Vector2{projEnd.x, projEnd.y}, 1.0f/projEnd.w);
-            screenEnd.x *= 1536.0f/2048.0f;
-            Vector2 screenDir = Vector2Normalize(Vector2Subtract(screenEnd, screenStart));
-
-            // Instance values
-            lineColors[lineInstanceIdx] = Vector4{screenDir.x,screenDir.y,width,packColor(ColorNormalize(color))};
-            lineTransforms[lineInstanceIdx++] = MatrixMultiply(matTransform, rlGetMatrixTransform());
-        };
-        auto drawChar = [&] (Matrix m, Color col, char c) {
-            textColors[textInstanceIdx] = ColorNormalize(Color{col.r,col.g,col.b,c-32});
-            textTransforms[textInstanceIdx++] = MatrixMultiply(MatrixScale(0.5f, 1.0f, 1.0f), m);
-        };
-        auto drawText = [&] (std::string text, Color col, float scale) {
-            rlPushMatrix();
-                rlScalef(scale, scale, scale);
-                for (char c : text) {
-                    if (c != 0) drawChar(rlGetMatrixTransform(), col, c);
-                    rlTranslatef(0.4f, 0, 0);
-                }
-            rlPopMatrix();
-        };
-
-        const float LINE_WIDTH = 0.15f;
-        const float GRAPH_SEGMENT = 0.125f;
-        const Color LINE_COLOR = Color{0,0,0,255};//Color{38,182,128,255};
-        //const Color LINE_COLOR = Color{38,182,128,255};
-
-        auto drawWireCube = [&] (float s) {
-            drawLine(Vector3{s, s, s}, Vector3{-s, s, s}, LINE_WIDTH, LINE_COLOR); // -
-            drawLine(Vector3{s, -s, s}, Vector3{-s, -s, s}, LINE_WIDTH, LINE_COLOR);
-            drawLine(Vector3{s, s, -s}, Vector3{-s, s, -s}, LINE_WIDTH, LINE_COLOR);
-            drawLine(Vector3{s, -s, -s}, Vector3{-s, -s, -s}, LINE_WIDTH, LINE_COLOR);
-            drawLine(Vector3{s, s, s}, Vector3{s, s, -s}, LINE_WIDTH, LINE_COLOR); // -
-            drawLine(Vector3{s, -s, s}, Vector3{s, -s, -s}, LINE_WIDTH, LINE_COLOR);
-            drawLine(Vector3{-s, s, s}, Vector3{-s, s, -s}, LINE_WIDTH, LINE_COLOR);
-            drawLine(Vector3{-s, -s, s}, Vector3{-s, -s, -s}, LINE_WIDTH, LINE_COLOR);
-            drawLine(Vector3{s, s, s}, Vector3{s, -s, s}, LINE_WIDTH, LINE_COLOR); // -
-            drawLine(Vector3{s, s, -s}, Vector3{s, -s, -s}, LINE_WIDTH, LINE_COLOR);
-            drawLine(Vector3{-s, s, s}, Vector3{-s, -s, s}, LINE_WIDTH, LINE_COLOR);
-            drawLine(Vector3{-s, s, -s}, Vector3{-s, -s, -s}, LINE_WIDTH, LINE_COLOR);
-        };
-        auto drawWireCircle = [&] (float radius, int segments) {
-            for (int i = 0; i < segments; i++) {
-                float angle = ((float)i/(float)segments) * PI * 2.0f;
-                float next_angle = ((float)(i+1)/(float)segments) * PI * 2.0f;
-                auto p = Vector3{cos(angle), sin(angle), 0};
-                auto n = Vector3{cos(next_angle), sin(next_angle), 0};
-                drawLine(Vector3Scale(p, radius), Vector3Scale(n, radius), LINE_WIDTH, LINE_COLOR);
-            }
-        };
-
-        /*rlPushMatrix();
+        rlPushMatrix();
             float space = 0.4f;
             rlTranslatef(0.8f, -1.5f, -2.0f * space);
             for (int i = -2; i <= 2; i++) {
                 rlTranslatef(0, 0, space);
                 //rlRotatef(((i+5)/10.0f) * 180.0f, 0, 1, 0);
-                drawWireCircle(0.6f + sin(gameTime + i * space) * 0.3f, 18);
+                this->DrawCircleLines(0.6f + sin(gameTime + i * space) * 0.3f, 18,
+                        lineTransforms, lineColors, lineInstanceIdx);
             }
-        rlPopMatrix();*/
+        rlPopMatrix();
 
         rlPushMatrix();
             rlTranslatef(0, 1.25f, 0);
             for (float x = -1.8f; x <= 1.8f; x += GRAPH_SEGMENT) {
                 float a = x*3.0f + gameTime;
                 float b = (x + GRAPH_SEGMENT)*3.0f + gameTime;
-                drawLine(Vector3{x, sin(a), cos(a)},
-                        Vector3{x + GRAPH_SEGMENT, sin(b), cos(b)}, LINE_WIDTH, LINE_COLOR);
+                this->DrawLine(Vector3{x, sin(a), cos(a)},
+                        Vector3{x + GRAPH_SEGMENT, sin(b), cos(b)}, LINE_WIDTH, LINE_COLOR,
+                        lineTransforms, lineColors, lineInstanceIdx);
             }
         rlPopMatrix();
         rlPushMatrix();
             rlTranslatef(0.0f, -1.25f, 0);
             rlRotatef(gameTime * 5.0f, 1, 1, 1);
-                drawWireCube(0.6f);
+                this->DrawCubeLines(0.6f,
+                        lineTransforms, lineColors, lineInstanceIdx);
         rlPopMatrix();
         rlPushMatrix();
             rlScalef(1.8f, 2.2f, 1.0f);
-            drawWireCube(1.0f);
+            this->DrawCubeLines(1.0f,
+                    lineTransforms, lineColors, lineInstanceIdx);
         rlPopMatrix();
 
         rlPushMatrix();
             rlTranslatef(-1.35f, 1.0f, 0);
-            drawText("Hello world", LINE_COLOR, 0.7f);
+            this->DrawText("Hello world", LINE_COLOR, 0.7f,
+                    textTransforms, textColors, textInstanceIdx);
         rlPopMatrix();
 
         // Lines
@@ -206,8 +157,8 @@ public:
     }
 
     Color GetClearColor() {
-        return Color{220,220,220,255};
-        //return Color{0,0,0,255};
+        //return Color{220,220,220,255};
+        return Color{0,0,0,255};
     }
     std::pair<int, int> GetTileResolution() {
         //return std::pair<int, int>(168, 224);
@@ -217,3 +168,91 @@ public:
     }
     std::pair<float, float> GetAngleDistance() { return std::pair<float, float>(30.0f, 20.0f); }
 };
+
+/* TEXT DRAWING FUNCTIONS */
+
+void GraphScene::DrawChar(Matrix m, Color col, char c,
+        Matrix* transforms, Vector4* colors, int& instanceIdx) {
+    colors[instanceIdx] = ColorNormalize(Color{col.r,col.g,col.b,c-32});
+    transforms[instanceIdx++] = MatrixMultiply(MatrixScale(0.5f, 1.0f, 1.0f), m);
+};
+void GraphScene::DrawText(std::string text, Color col, float scale,
+        Matrix* transforms, Vector4* colors, int& instanceIdx) {
+    rlPushMatrix();
+        rlScalef(scale, scale, scale);
+        for (char c : text) {
+            if (c != 0) this->DrawChar(rlGetMatrixTransform(), col, c,
+                    transforms, colors, instanceIdx);
+            rlTranslatef(0.4f, 0, 0);
+        }
+    rlPopMatrix();
+};
+
+/* LINE DRAWING FUNCTIONS */
+
+void GraphScene::DrawLine(Vector3 start, Vector3 end, float width, Color color,
+        Matrix* transforms, Vector4* colors, int& instanceIdx) {
+    Vector3 midpoint = Vector3Lerp(start, end, 0.5f);
+    Vector3 direction = Vector3Normalize(Vector3Subtract(end, start));
+    float distance = Vector3Distance(end, start);
+
+    // Matrix Transformation
+    Matrix matTranslation = MatrixTranslate(midpoint.x, midpoint.y, midpoint.z);
+    Matrix matScale = MatrixScale(/*width*/0.0f, distance, 1.0f);
+
+    Quaternion fromToRotation = QuaternionFromVector3ToVector3(Vector3{0,1.0f,0}, direction);
+    Matrix matRotation = QuaternionToMatrix(fromToRotation);
+    Matrix matTransform = MatrixMultiply(MatrixMultiply(matScale, matRotation), matTranslation);
+
+    // Line screen direction
+    Matrix matModelView = MatrixMultiply(rlGetMatrixTransform(), rlGetMatrixModelview());
+    Matrix mvp = MatrixMultiply(matModelView, rlGetMatrixProjection());
+
+    Vector4 projStart = Vector4Transform(Vector4{start.x,start.y,start.z,1.0f}, mvp);
+    Vector2 screenStart = Vector2Scale(Vector2{projStart.x, projStart.y}, 1.0f/projStart.w);
+    screenStart.x *= 1536.0f/2048.0f;
+    Vector4 projEnd = Vector4Transform(Vector4{end.x,end.y,end.z,1.0f}, mvp);
+    Vector2 screenEnd = Vector2Scale(Vector2{projEnd.x, projEnd.y}, 1.0f/projEnd.w);
+    screenEnd.x *= 1536.0f/2048.0f;
+    Vector2 screenDir = Vector2Normalize(Vector2Subtract(screenEnd, screenStart));
+
+    // Instance values
+    colors[instanceIdx] = Vector4{screenDir.x,screenDir.y,width,this->PackColor(ColorNormalize(color))};
+    transforms[instanceIdx++] = MatrixMultiply(matTransform, rlGetMatrixTransform());
+}
+void GraphScene::DrawCubeLines(float s, Matrix* transforms, Vector4* colors, int& instanceIdx) {
+    this->DrawLine(Vector3{s, s, s}, Vector3{-s, s, s}, LINE_WIDTH, LINE_COLOR,
+            transforms, colors, instanceIdx); // -
+    this->DrawLine(Vector3{s, -s, s}, Vector3{-s, -s, s}, LINE_WIDTH, LINE_COLOR,
+            transforms, colors, instanceIdx);
+    this->DrawLine(Vector3{s, s, -s}, Vector3{-s, s, -s}, LINE_WIDTH, LINE_COLOR,
+            transforms, colors, instanceIdx);
+    this->DrawLine(Vector3{s, -s, -s}, Vector3{-s, -s, -s}, LINE_WIDTH, LINE_COLOR,
+            transforms, colors, instanceIdx);
+    this->DrawLine(Vector3{s, s, s}, Vector3{s, s, -s}, LINE_WIDTH, LINE_COLOR,
+            transforms, colors, instanceIdx); // -
+    this->DrawLine(Vector3{s, -s, s}, Vector3{s, -s, -s}, LINE_WIDTH, LINE_COLOR,
+            transforms, colors, instanceIdx);
+    this->DrawLine(Vector3{-s, s, s}, Vector3{-s, s, -s}, LINE_WIDTH, LINE_COLOR,
+            transforms, colors, instanceIdx);
+    this->DrawLine(Vector3{-s, -s, s}, Vector3{-s, -s, -s}, LINE_WIDTH, LINE_COLOR,
+            transforms, colors, instanceIdx);
+    this->DrawLine(Vector3{s, s, s}, Vector3{s, -s, s}, LINE_WIDTH, LINE_COLOR,
+            transforms, colors, instanceIdx); // -
+    this->DrawLine(Vector3{s, s, -s}, Vector3{s, -s, -s}, LINE_WIDTH, LINE_COLOR,
+            transforms, colors, instanceIdx);
+    this->DrawLine(Vector3{-s, s, s}, Vector3{-s, -s, s}, LINE_WIDTH, LINE_COLOR,
+            transforms, colors, instanceIdx);
+    this->DrawLine(Vector3{-s, s, -s}, Vector3{-s, -s, -s}, LINE_WIDTH, LINE_COLOR,
+            transforms, colors, instanceIdx);
+}
+void GraphScene::DrawCircleLines(float radius, int segments, Matrix* transforms, Vector4* colors, int& instanceIdx) {
+    for (int i = 0; i < segments; i++) {
+        float angle = ((float)i/(float)segments) * PI * 2.0f;
+        float next_angle = ((float)(i+1)/(float)segments) * PI * 2.0f;
+        auto p = Vector3{cos(angle), sin(angle), 0};
+        auto n = Vector3{cos(next_angle), sin(next_angle), 0};
+        this->DrawLine(Vector3Scale(p, radius), Vector3Scale(n, radius), LINE_WIDTH, LINE_COLOR,
+                transforms, colors, instanceIdx);
+    }
+}
