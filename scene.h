@@ -17,6 +17,9 @@ public:
         return std::pair<int, int>(315, 420);
         //return std::pair<int, int>(420, 560);
     }
+    virtual bool ShowFPS() {
+        return true;
+    }
 };
 
 #endif

@@ -17,8 +17,8 @@
 #include "scene.h"
 #include "clock.h"
 #include "pong.h"
-//#include "console.h"
 #include "graph.h"
+#include "tetris.h"
 
 int main()
 {
@@ -42,10 +42,11 @@ int main()
     Shader lkgFragment = LoadShaderSingleFile("./Shaders/quilt.shader"); // Quilt shader
 
     // Scene
-    //Scene* scene = new ClockScene();
     //Scene* scene = new PongScene();
     //Scene* scene = new ConsoleScene();
-    Scene* scene = new GraphScene();
+    //Scene* scene = new GraphScene();
+    //Scene* scene = new ClockScene();
+    Scene* scene = new TetrisScene();
 
     // LKG Config
     std::ifstream config_file("display.cfg");
@@ -129,7 +130,9 @@ int main()
                 //DrawTexture(quiltRT.texture, 0, 0, WHITE);
             EndShaderMode();
 
-            DrawFPSSize(50, 50, 90);
+            if (scene->ShowFPS())
+                DrawFPSSize(50, 50, 90);
+            //std::cout << GetFPS() << std::endl;
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
