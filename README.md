@@ -19,5 +19,6 @@ Please use my fork of raylib, which adds OpenGL ES 3 support for the Pi (for ins
     - Run `sudo make install`
         - `sudo make install` may expect libraylib.a to be in the parent directory. However make places it into the src directory, so you might have to move libraylib.a up one directory.
 2. Run `mkdir build` and `./build.sh`.
+3. Update `display.cfg` with your device specific values (taken from the `visual.json` file on the embedded usb drive). Note that for the portrait I find the a viewCone of 50 gives a better experience.
 
 \* Note that DRM means 'Direct Rendering Manager', not 'Digital Rights Management'.
