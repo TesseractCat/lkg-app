@@ -90,6 +90,8 @@ struct Dropped {
     bool CanMove(Cell (&cells)[10][12], Vector2 direction) {
         for (Vector2 cell : GetCells(rotation)) {
             Vector2 newPos = Vector2Add(Vector2Add(cell, direction), Vector2{posX, posY});
+            if (newPos.y > (12 - 1))
+                continue;
             if (!cells[(int)(newPos.x)][(int)(newPos.y)].empty
                     || newPos.y < 0 || newPos.x < 0 || newPos.x > 9)
                 return false;
@@ -246,6 +248,16 @@ public:
                 dropped.Apply(cells);
                 dropped = Dropped{nextTetromino, 5, 11, 0};
                 nextTetromino = static_cast<Tetromino>(GetRandomValue(0,6));
+
+                if (!dropped.CanMove(cells, Vector2{0, 0})) {
+                    std::cout << "[Game Over] - Score: " << std::to_string(score) << std::endl;
+                    for (int y = 0; y < 12; y++) {
+                        for (int x = 0; x < 10; x++) {
+                            cells[x][y].empty = true;
+                        }
+                    }
+                    score = 0;
+                }
 
                 //Check for cleared lines
                 for (int y = 11; y >= 0; y--) {
