@@ -31,11 +31,11 @@ void main()
         (1.0/atlasSize.x) * mod(charIdx, atlasSize.x),
         (1.0/atlasSize.y) * floor(charIdx/atlasSize.x));
 
-    vec4 modelPos = matModel*vec4(vertexPosition, 1.0);
+    /*vec4 modelPos = matModel*vec4(vertexPosition, 1.0);
     vec3 lightDir = normalize(vec3(-3.0, 5.0, 8.0) - modelPos.xyz);
-    float diff = (max(dot(vertexNormal, lightDir), 0.0) + 0.2);
+    float diff = (max(dot(vertexNormal, lightDir), 0.0) + 0.2);*/
 
-    fragColor = vec4((diff * colDiffuse).xyz, 1.0);
+    fragColor = vec4((/*diff * */colDiffuse).xyz, 1.0);
     gl_Position = (matProjection*matView*matModel)*vec4(vertexPosition, 1.0);
     return;
 }
