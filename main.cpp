@@ -51,10 +51,7 @@ int main()
     // LKG Config
     std::ifstream config_file("display.cfg");
     LKGConfig config(config_file);
-    
-    float ri = 0.0f;
-    float bi = 2.0f;
-    
+
     std::pair<float, float> angleDistance = scene->GetAngleDistance();
     std::pair<int, int> tiles = scene->GetTiles();
     std::pair<int, int> tileRes = scene->GetTileResolution();
@@ -69,10 +66,6 @@ int main()
     SetShaderValue(lkgFragment, centerLoc, &config.center, SHADER_UNIFORM_FLOAT);
     int dpiLoc = GetShaderLocation(lkgFragment, "dpi");
     SetShaderValue(lkgFragment, dpiLoc, &config.dpi, SHADER_UNIFORM_FLOAT);
-    int riLoc = GetShaderLocation(lkgFragment, "ri");
-    SetShaderValue(lkgFragment, riLoc, &ri, SHADER_UNIFORM_FLOAT);
-    int biLoc = GetShaderLocation(lkgFragment, "bi");
-    SetShaderValue(lkgFragment, biLoc, &bi, SHADER_UNIFORM_FLOAT);
     int tileLoc = GetShaderLocation(lkgFragment, "tile");
     float tile[2] = { tiles.first, tiles.second };
     SetShaderValue(lkgFragment, tileLoc, tile, SHADER_UNIFORM_VEC2);
