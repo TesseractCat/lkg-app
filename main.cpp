@@ -45,8 +45,8 @@ int main()
     //Scene* scene = new PongScene();
     //Scene* scene = new ConsoleScene();
     //Scene* scene = new GraphScene();
-    //Scene* scene = new ClockScene();
-    Scene* scene = new TetrisScene();
+    Scene* scene = new ClockScene();
+    //Scene* scene = new TetrisScene();
 
     // LKG Config
     std::ifstream config_file("display.cfg");

@@ -179,6 +179,10 @@ private:
     float dropTime;
     int score = 0;
     Tetromino nextTetromino;
+
+    // Menu
+    bool menuOpen = false;
+    float menuOffset = 0;
 public:
     TetrisScene() {
         std::cout << "[INITIALIZING SCENE]: Tetris" << std::endl;
@@ -239,63 +243,70 @@ public:
         float deltaTime = GetFrameTime();
         float gameTime = GetTime();
 
-        if ((gameTime - dropTime) > (IsKeyDown(KEY_S) ? 0.05f : 0.5f)) {
-            dropTime = gameTime;
-            if (dropped.CanMove(cells, Vector2{0, -1})) {
-                dropped.posY -= 1;
-            } else {
-                //Apply dropped tetromino
-                dropped.Apply(cells);
-                dropped = Dropped{nextTetromino, 5, 11, 0};
-                nextTetromino = static_cast<Tetromino>(GetRandomValue(0,6));
+        if (!menuOpen) {
+            if ((gameTime - dropTime) > (IsKeyDown(KEY_S) ? 0.05f : 0.5f)) {
+                dropTime = gameTime;
+                if (dropped.CanMove(cells, Vector2{0, -1})) {
+                    dropped.posY -= 1;
+                } else {
+                    //Apply dropped tetromino
+                    dropped.Apply(cells);
+                    dropped = Dropped{nextTetromino, 5, 11, 0};
+                    nextTetromino = static_cast<Tetromino>(GetRandomValue(0,6));
 
-                if (!dropped.CanMove(cells, Vector2{0, 0})) {
-                    std::cout << "[Game Over] - Score: " << std::to_string(score) << std::endl;
-                    for (int y = 0; y < 12; y++) {
-                        for (int x = 0; x < 10; x++) {
-                            cells[x][y].empty = true;
-                        }
-                    }
-                    score = 0;
-                }
-
-                //Check for cleared lines
-                for (int y = 11; y >= 0; y--) {
-                    bool cleared = true;
-                    for (int x = 0; x < 10; x++) {
-                        if (cells[x][y].empty)
-                            cleared = false;
-                    }
-                    if (cleared) {
-                        score += 100;
-                        //Clear this line
-                        for (int x = 0; x < 10; x++) {
-                            cells[x][y].empty = true;
-                        }
-                        //Clear top row
-                        for (int x = 0; x < 10; x++) {
-                            cells[x][11].empty = true;
-                        }
-                        //Shift everything downward
-                        for (int sy = y; sy < 12 - 1; sy++) {
-                            //Copy above row
+                    if (!dropped.CanMove(cells, Vector2{0, 0})) {
+                        std::cout << "[Game Over] - Score: " << std::to_string(score) << std::endl;
+                        for (int y = 0; y < 12; y++) {
                             for (int x = 0; x < 10; x++) {
-                                cells[x][sy] = cells[x][sy + 1];
+                                cells[x][y].empty = true;
+                            }
+                        }
+                        score = 0;
+                    }
+
+                    //Check for cleared lines
+                    for (int y = 11; y >= 0; y--) {
+                        bool cleared = true;
+                        for (int x = 0; x < 10; x++) {
+                            if (cells[x][y].empty)
+                                cleared = false;
+                        }
+                        if (cleared) {
+                            score += 100;
+                            //Clear this line
+                            for (int x = 0; x < 10; x++) {
+                                cells[x][y].empty = true;
+                            }
+                            //Clear top row
+                            for (int x = 0; x < 10; x++) {
+                                cells[x][11].empty = true;
+                            }
+                            //Shift everything downward
+                            for (int sy = y; sy < 12 - 1; sy++) {
+                                //Copy above row
+                                for (int x = 0; x < 10; x++) {
+                                    cells[x][sy] = cells[x][sy + 1];
+                                }
                             }
                         }
                     }
                 }
             }
+            if (IsKeyDown(KEY_A) && dropped.CanMove(cells, Vector2{-1, 0})) {
+                dropped.posX -= 1;
+            }
+            if (IsKeyDown(KEY_D) && dropped.CanMove(cells, Vector2{1, 0})) {
+                dropped.posX += 1;
+            }
+            if (IsKeyDown(KEY_W) && dropped.CanRotate(cells, true)) {
+                dropped.Rotate(true);
+            }
         }
-        if (IsKeyDown(KEY_A) && dropped.CanMove(cells, Vector2{-1, 0})) {
-            dropped.posX -= 1;
+
+        if (IsKeyDown(KEY_F)) {
+            menuOpen = !menuOpen;
         }
-        if (IsKeyDown(KEY_D) && dropped.CanMove(cells, Vector2{1, 0})) {
-            dropped.posX += 1;
-        }
-        if (IsKeyDown(KEY_W) && dropped.CanRotate(cells, true)) {
-            dropped.Rotate(true);
-        }
+        menuOffset = Lerp(menuOffset, menuOpen ? -2.0f : 0.0f, deltaTime * 2.0f);
     }
     void Draw() {
         float gameTime = GetTime();
@@ -313,7 +324,7 @@ public:
         // Containing box
         LINE_WIDTH = 0.25f;
         rlPushMatrix();
-            rlTranslatef(0.0f, -0.35f, 0);
+            rlTranslatef(0.0f + menuOffset, -0.35f, 0);
             rlRotatef(-15.0f, 1, 0, 0);
             rlScalef(1.8f, 2.2f, 1.0f * CUBE_WIDTH);
 
@@ -324,7 +335,7 @@ public:
         
         // Tetrominoes
         rlPushMatrix();
-            rlTranslatef(0.0f, -0.35f, 0);
+            rlTranslatef(0.0f + menuOffset, -0.35f, 0);
             rlRotatef(-15.0f, 1, 0, 0);
             rlTranslatef(4.5f * -CUBE_WIDTH, -2.2f + 0.5*CUBE_WIDTH, 0);
 
@@ -366,7 +377,7 @@ public:
         rlPopMatrix();
 
         rlPushMatrix();
-            rlTranslatef(-1.5f, 2.3f, -0.575f);
+            rlTranslatef(-1.5f + menuOffset, 2.3f, -0.575f);
             this->DrawText(std::to_string(score), LINE_COLOR, 0.6f, 0.5f,
                     textTransforms, textColors, textInstanceIdx);
 
@@ -382,8 +393,19 @@ public:
             }
         rlPopMatrix();
 
-        // Lines
-        //BeginBlendMode(BLEND_ADDITIVE);
+        // Menu
+        if (abs(menuOffset) > 0.05f) {
+            rlPushMatrix();
+                rlTranslatef(2.35f + menuOffset, 2.1f, -0.5f);
+                this->DrawText("Tetris", LINE_COLOR, 0.7f, 0.5f,
+                        textTransforms, textColors, textInstanceIdx);
+                rlTranslatef(0, -1.0f, -0.5f);
+                this->DrawText("Score: " + std::to_string(score), LINE_COLOR, 0.45f, 0.5f,
+                        textTransforms, textColors, textInstanceIdx);
+            rlPopMatrix();
+        }
+
+        // Draw Instanced
         DrawMeshInstancedC(quadMesh, lineMaterial, lineTransforms, lineColors, lineInstanceIdx);
         DrawMeshInstancedC(quadMesh, textMaterial, textTransforms, textColors, textInstanceIdx);
     }
@@ -399,7 +421,7 @@ public:
         //return std::pair<int, int>(420, 560);
     }
     std::pair<float, float> GetAngleDistance() { return std::pair<float, float>(30.0f, 20.0f); }
-    bool ShowFPS() { return false; };
+    bool ShowFPS() { return true; };
 };
 
 /* TEXT DRAWING FUNCTIONS */
