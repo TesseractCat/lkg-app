@@ -45,15 +45,15 @@ int main()
     //Scene* scene = new PongScene();
     //Scene* scene = new ConsoleScene();
     //Scene* scene = new GraphScene();
-    //Scene* scene = new ClockScene();
-    Scene* scene = new TetrisScene();
+    Scene* scene = new ClockScene();
+    //Scene* scene = new TetrisScene();
 
     // LKG Config
     std::ifstream config_file("display.cfg");
     LKGConfig config(config_file);
     
-    int ri = 0;
-    int bi = 2;
+    float ri = 0.0f;
+    float bi = 2.0f;
     
     std::pair<float, float> angleDistance = scene->GetAngleDistance();
     std::pair<int, int> tiles = scene->GetTiles();
@@ -70,9 +70,9 @@ int main()
     int dpiLoc = GetShaderLocation(lkgFragment, "dpi");
     SetShaderValue(lkgFragment, dpiLoc, &config.dpi, SHADER_UNIFORM_FLOAT);
     int riLoc = GetShaderLocation(lkgFragment, "ri");
-    SetShaderValue(lkgFragment, riLoc, &ri, SHADER_UNIFORM_INT);
+    SetShaderValue(lkgFragment, riLoc, &ri, SHADER_UNIFORM_FLOAT);
     int biLoc = GetShaderLocation(lkgFragment, "bi");
-    SetShaderValue(lkgFragment, biLoc, &bi, SHADER_UNIFORM_INT);
+    SetShaderValue(lkgFragment, biLoc, &bi, SHADER_UNIFORM_FLOAT);
     int tileLoc = GetShaderLocation(lkgFragment, "tile");
     float tile[2] = { tiles.first, tiles.second };
     SetShaderValue(lkgFragment, tileLoc, tile, SHADER_UNIFORM_VEC2);
