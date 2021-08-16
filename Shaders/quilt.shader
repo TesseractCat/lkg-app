@@ -45,9 +45,6 @@ uniform float slope;
 uniform float center;
 uniform float dpi;
 
-uniform float ri;
-uniform float bi;
-
 // IN OUT
 in vec2 fragTexCoord;
 out vec4 finalColor;
@@ -68,7 +65,6 @@ vec2 quilt_map(vec3 t, vec2 pos, float a) {
 
 void main (void) {
     vec4 holoPlayCalibration = vec4(dpi, pitch, slope, center);
-    vec2 holoPlayRB = vec2(ri, bi);
     
     vec3 color = vec3(0.0);
     vec2 uv = gl_FragCoord.xy;
@@ -81,9 +77,9 @@ void main (void) {
     float subp2 = subp * pitch;
     
     float a = (-st.x - st.y * tilt) * pitch - holoPlayCalibration.w;
-    color.r = texture(texture1, quilt_map(vec3(tile.xy, tile.x * tile.y), st, a-holoPlayRB.x*subp2)).r;
-    color.g = texture(texture1, quilt_map(vec3(tile.xy, tile.x * tile.y), st, a-subp2)).g;
-    color.b = texture(texture1, quilt_map(vec3(tile.xy, tile.x * tile.y), st, a-holoPlayRB.y*subp2)).b;
+    color.r = texture(texture1, quilt_map(vec3(tile.xy, tile.x * tile.y), st, a - 0.0 * subp2)).r;
+    color.g = texture(texture1, quilt_map(vec3(tile.xy, tile.x * tile.y), st, a - 1.0 * subp2)).g;
+    color.b = texture(texture1, quilt_map(vec3(tile.xy, tile.x * tile.y), st, a - 2.0 * subp2)).b;
     
     #if defined(HOLOPLAY_DEBUG_CENTER)
     // Mark center line only in central view
